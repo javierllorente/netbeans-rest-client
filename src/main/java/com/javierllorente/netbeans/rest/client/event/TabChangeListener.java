@@ -28,6 +28,8 @@ import javax.swing.event.DocumentListener;
  */
 public class TabChangeListener implements ChangeListener {
     
+    private final int AUTHORISATION_TAB = 1;
+    
     private final TablePanel headersPanel;
     private final AuthPanel authPanel;
     private final DocumentListener tokenDocumentListener;
@@ -42,7 +44,7 @@ public class TabChangeListener implements ChangeListener {
     @Override
     public void stateChanged(ChangeEvent ce) {
         JTabbedPane pane = (JTabbedPane) ce.getSource();
-        if (pane.getSelectedIndex() == 1) {
+        if (pane.getSelectedIndex() == AUTHORISATION_TAB) {
             int index = headersPanel.containsKey("Authorization");
             String token = "";
 
