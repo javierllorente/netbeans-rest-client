@@ -26,6 +26,7 @@ import com.javierllorente.netbeans.rest.client.UserAgent;
 import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.core.MultivaluedMap;
 import java.awt.Cursor;
+import java.awt.event.ActionEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyAdapter;
@@ -149,7 +150,15 @@ public class RestClientTopComponent extends TopComponent {
         paramsPanel.addTableKeyListener(escapeKeyListener);
         
         DocumentListener tokenDocumentListener = new TokenDocumentListener(headersPanel);        
-        authPanel.addTokenDocumentListener(tokenDocumentListener);        
+        authPanel.addTokenDocumentListener(tokenDocumentListener);
+        authPanel.addComboBoxListener((ActionEvent ae) -> {
+            if (authPanel.getAuthType().equals("No Auth")) {
+                int index = headersPanel.containsKey("Authorization");                
+                if (index != -1 && headersPanel.getValue(index).startsWith("Bearer")) {
+                    headersPanel.removeRow(index);
+                }
+            }
+        });
         TabChangeListener tabChangeListener = new TabChangeListener(headersPanel, authPanel, tokenDocumentListener);
         requestTabbedPane.addChangeListener(tabChangeListener);
         

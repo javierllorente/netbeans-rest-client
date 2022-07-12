@@ -16,6 +16,7 @@
 package com.javierllorente.netbeans.rest.client.ui;
 
 import java.awt.CardLayout;
+import java.awt.event.ActionListener;
 import javax.swing.event.DocumentListener;
 
 /**
@@ -61,6 +62,10 @@ public class AuthPanel extends javax.swing.JPanel {
     
     public void removeTokenDocumentListener(DocumentListener dl) {
         tokenTextField.getDocument().removeDocumentListener(dl);
+    }
+    
+    public void addComboBoxListener(ActionListener l) {
+        authComboBox.addActionListener(l);
     }
 
     /**
