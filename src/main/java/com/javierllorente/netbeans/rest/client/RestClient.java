@@ -212,6 +212,41 @@ public class RestClient {
         
         return str;
     }
+    
+    public String patch(String resource) 
+            throws ClientErrorException, ServerErrorException, ProcessingException {
+        long startTime = System.currentTimeMillis();
+        
+        WebTarget target = client.target(resource);
+        Invocation.Builder invocationBuilder = target.request();
+        setMediaTypeAccepted(invocationBuilder);
+
+        if (headers != null) {
+            setRequestHeaders(invocationBuilder);
+        }
+        
+        MediaType mediaType = getBodyMediaType();
+
+        Response response = invocationBuilder.build("PATCH", Entity.entity(body, mediaType)).invoke();
+        long endTime = System.currentTimeMillis();
+        elapsedTime = endTime - startTime;        
+        status = response.getStatus();
+        statusText = response.getStatusInfo().toEnum().toString();
+        logger.info(getConnectionInfo(target.getUri(), response.getStatus(), 0));
+        
+        responseHeaders = response.getHeaders();  
+        response.bufferEntity();        
+        
+        String str;
+        if (response.getMediaType() == MediaType.APPLICATION_JSON_TYPE) {
+            JsonObject jsonObject = response.readEntity(JsonObject.class);
+            str = Utils.jsonPrettyFormat(jsonObject);
+        } else {
+            str = response.readEntity(String.class);
+        }
+        
+        return str;
+    }
 
     private void setMediaTypeAccepted(Invocation.Builder invocationBuilder) {
         invocationBuilder.accept(MediaType.APPLICATION_JSON_TYPE,
