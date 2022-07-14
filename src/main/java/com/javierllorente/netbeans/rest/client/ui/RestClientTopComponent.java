@@ -271,6 +271,9 @@ public class RestClientTopComponent extends TopComponent {
             case "PATCH":
                 patchRequest();
                 break;
+            case "DELETE":
+                deleteRequest();
+                break;
         }
         
         logger.log(Level.INFO, "Request method: {0}, Auth type: {1}, Body type: {2}", 
@@ -355,6 +358,29 @@ public class RestClientTopComponent extends TopComponent {
 
             try {
                 String response = client.patch(urlPanel.getUrl());
+                MultivaluedMap<String, Object> responseHeaders = client.getResponseHeaders();
+                updateResponsePanel(response, responseHeaders);
+            } catch (ProcessingException ex) {
+                logger.warning(ex.getMessage());
+                responsePanel.setResponse(ex.getMessage());
+            } finally {
+                progressHandle.finish();
+                setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            }
+            
+        });
+    }
+    
+    private void deleteRequest() {
+        processor.post(() -> {
+            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            ProgressHandle progressHandle = ProgressHandle.createHandle("Sending request");
+            progressHandle.start();
+
+            client.setBody(bodyPanel.getBody());
+
+            try {
+                String response = client.delete(urlPanel.getUrl());
                 MultivaluedMap<String, Object> responseHeaders = client.getResponseHeaders();
                 updateResponsePanel(response, responseHeaders);
             } catch (ProcessingException ex) {

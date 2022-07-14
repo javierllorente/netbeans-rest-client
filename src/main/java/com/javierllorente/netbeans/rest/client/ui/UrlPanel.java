@@ -96,7 +96,7 @@ public class UrlPanel extends javax.swing.JPanel {
 
         setPreferredSize(new java.awt.Dimension(788, 25));
 
-        methodComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "GET", "POST", "PUT", "PATCH" }));
+        methodComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "GET", "POST", "PUT", "PATCH", "DELETE" }));
 
         org.openide.awt.Mnemonics.setLocalizedText(sendButton, "Send");
 
