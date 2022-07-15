@@ -18,6 +18,7 @@ package com.javierllorente.netbeans.rest.client;
 import jakarta.json.JsonObject;
 import jakarta.json.stream.JsonGenerator;
 import jakarta.ws.rs.ClientErrorException;
+import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.client.Client;
@@ -43,7 +44,7 @@ import org.glassfish.jersey.logging.LoggingFeature;
  * @author Javier Llorente <javier@opensuse.org>
  */
 public class RestClient {
-
+    
     private static final Logger logger = Logger.getLogger(RestClient.class.getName());
     private final Client client;
     private MultivaluedMap<String, String> headers;
@@ -107,11 +108,11 @@ public class RestClient {
 
     private String getConnectionInfo(URI uri, int status, long time) {
         return "URL: " + uri.toString() + ", status: " + status + ", time: " + time + " ms";
-    }    
+    }
 
-    public String get(String resource)
-            throws ClientErrorException, ServerErrorException, ProcessingException {  
-        long startTime = System.currentTimeMillis();
+    public String request(String resource, String method) 
+            throws ClientErrorException, ServerErrorException, ProcessingException {
+              long startTime = System.currentTimeMillis();
         
         WebTarget target = client.target(resource);
         Invocation.Builder invocationBuilder = target.request();
@@ -119,10 +120,10 @@ public class RestClient {
         
         if (headers != null) {
             setRequestHeaders(invocationBuilder);
-        }        
-
-        String str;     
-        try (Response response = invocationBuilder.get()) {
+        }    
+        
+        String str;
+        try (Response response = invoke(invocationBuilder, method)) {
             long endTime = System.currentTimeMillis();
             elapsedTime = endTime - startTime;
             status = response.getStatus();
@@ -143,142 +144,21 @@ public class RestClient {
         return str;
     }
     
-    public String post(String resource) 
-            throws ClientErrorException, ServerErrorException, ProcessingException {
-        long startTime = System.currentTimeMillis();
-        
-        WebTarget target = client.target(resource);
-        Invocation.Builder invocationBuilder = target.request();
-        setMediaTypeAccepted(invocationBuilder);
-        
-        if (headers != null) {
-            setRequestHeaders(invocationBuilder);
-        } 
-        
-        MediaType mediaType = getBodyMediaType();
-
-        Response response = invocationBuilder.put(Entity.entity(body, mediaType));
-        long endTime = System.currentTimeMillis();
-        elapsedTime = endTime - startTime;        
-        status = response.getStatus();
-        statusText = response.getStatusInfo().toEnum().toString();
-        logger.info(getConnectionInfo(target.getUri(), response.getStatus(), 0));
-        
-        responseHeaders = response.getHeaders();    
-        response.bufferEntity();        
-        
-        String str;
-        if (response.getMediaType() == MediaType.APPLICATION_JSON_TYPE) {
-            JsonObject jsonObject = response.readEntity(JsonObject.class);
-            str = Utils.jsonPrettyFormat(jsonObject);
-        } else {
-            str = response.readEntity(String.class);
+    private Response invoke(Invocation.Builder invocationBuilder, String method) {
+        switch (method) {
+            case HttpMethod.GET:
+                return invocationBuilder.get();
+            case HttpMethod.POST:
+                return invocationBuilder.post(Entity.entity(body, getBodyMediaType()));
+            case HttpMethod.PUT:
+                return invocationBuilder.put(Entity.entity(body, getBodyMediaType()));
+            case HttpMethod.PATCH:
+                return invocationBuilder.build("PATCH", Entity.entity(body, getBodyMediaType())).invoke();
+            case HttpMethod.DELETE:
+                return invocationBuilder.delete();
+            default:
+                throw new AssertionError("Unknown request method " + method);   
         }
-        
-        return str;
-    }    
-
-    public String put(String resource) 
-            throws ClientErrorException, ServerErrorException, ProcessingException {
-        long startTime = System.currentTimeMillis();
-        
-        WebTarget target = client.target(resource);
-        Invocation.Builder invocationBuilder = target.request();
-        setMediaTypeAccepted(invocationBuilder);
-
-        if (headers != null) {
-            setRequestHeaders(invocationBuilder);
-        }
-        
-        MediaType mediaType = getBodyMediaType();
-
-        Response response = invocationBuilder.put(Entity.entity(body, mediaType));
-        long endTime = System.currentTimeMillis();
-        elapsedTime = endTime - startTime;        
-        status = response.getStatus();
-        statusText = response.getStatusInfo().toEnum().toString();
-        logger.info(getConnectionInfo(target.getUri(), response.getStatus(), 0));
-        
-        responseHeaders = response.getHeaders();  
-        response.bufferEntity();        
-        
-        String str;
-        if (response.getMediaType() == MediaType.APPLICATION_JSON_TYPE) {
-            JsonObject jsonObject = response.readEntity(JsonObject.class);
-            str = Utils.jsonPrettyFormat(jsonObject);
-        } else {
-            str = response.readEntity(String.class);
-        }
-        
-        return str;
-    }
-    
-    public String patch(String resource) 
-            throws ClientErrorException, ServerErrorException, ProcessingException {
-        long startTime = System.currentTimeMillis();
-        
-        WebTarget target = client.target(resource);
-        Invocation.Builder invocationBuilder = target.request();
-        setMediaTypeAccepted(invocationBuilder);
-
-        if (headers != null) {
-            setRequestHeaders(invocationBuilder);
-        }
-        
-        MediaType mediaType = getBodyMediaType();
-
-        Response response = invocationBuilder.build("PATCH", Entity.entity(body, mediaType)).invoke();
-        long endTime = System.currentTimeMillis();
-        elapsedTime = endTime - startTime;        
-        status = response.getStatus();
-        statusText = response.getStatusInfo().toEnum().toString();
-        logger.info(getConnectionInfo(target.getUri(), response.getStatus(), 0));
-        
-        responseHeaders = response.getHeaders();  
-        response.bufferEntity();        
-        
-        String str;
-        if (response.getMediaType() == MediaType.APPLICATION_JSON_TYPE) {
-            JsonObject jsonObject = response.readEntity(JsonObject.class);
-            str = Utils.jsonPrettyFormat(jsonObject);
-        } else {
-            str = response.readEntity(String.class);
-        }
-        
-        return str;
-    }
-    
-    public String delete(String resource) 
-            throws ClientErrorException, ServerErrorException, ProcessingException {
-        long startTime = System.currentTimeMillis();
-        
-        WebTarget target = client.target(resource);
-        Invocation.Builder invocationBuilder = target.request();
-        setMediaTypeAccepted(invocationBuilder);
-
-        if (headers != null) {
-            setRequestHeaders(invocationBuilder);
-        }
-
-        Response response = invocationBuilder.delete();
-        long endTime = System.currentTimeMillis();
-        elapsedTime = endTime - startTime;        
-        status = response.getStatus();
-        statusText = response.getStatusInfo().toEnum().toString();
-        logger.info(getConnectionInfo(target.getUri(), response.getStatus(), 0));
-        
-        responseHeaders = response.getHeaders();  
-        response.bufferEntity();        
-        
-        String str;
-        if (response.getMediaType() == MediaType.APPLICATION_JSON_TYPE) {
-            JsonObject jsonObject = response.readEntity(JsonObject.class);
-            str = Utils.jsonPrettyFormat(jsonObject);
-        } else {
-            str = response.readEntity(String.class);
-        }
-        
-        return str;
     }
 
     private void setMediaTypeAccepted(Invocation.Builder invocationBuilder) {
@@ -311,6 +191,8 @@ public class RestClient {
             case "XML":
                 mediaType = MediaType.APPLICATION_XML_TYPE;
                 break;
+            default:
+                throw new AssertionError("Unknown body type " + bodyType);
         }
 
         return mediaType;

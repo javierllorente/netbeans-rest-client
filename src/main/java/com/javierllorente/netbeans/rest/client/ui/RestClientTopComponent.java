@@ -23,6 +23,7 @@ import com.javierllorente.netbeans.rest.client.event.TableParamsListener;
 import com.javierllorente.netbeans.rest.client.event.TokenDocumentListener;
 import com.javierllorente.netbeans.rest.client.event.UrlDocumentListener;
 import com.javierllorente.netbeans.rest.client.UserAgent;
+import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.core.MultivaluedMap;
 import java.awt.Cursor;
@@ -229,112 +230,57 @@ public class RestClientTopComponent extends TopComponent {
         responsePanel.clear();
         setDisplayName(urlPanel.getRequestMethod() + " " + urlPanel.getDisplayUrl());
         setToolTipText(urlPanel.getUrl());
-        
-        if (headersPanel.getRowCount() > 0) {
-            MultivaluedMap<String, String> headers = headersPanel.getValues();
-            client.setHeaders(headers);
-        }
-        
-        switch (authPanel.getAuthType()) {
-            case "No Auth":
-                break;
-            case "Basic Auth":
-                client.basicAuth(authPanel.getUsername(), String.valueOf(authPanel.getPassword()));
-                break;
-            case "Bearer Token":
-                // Do nothing. Token has already been added in the headers.
-                break;
-        }        
-        
-        switch (bodyPanel.getBodyType()) {
-            case "None":
-                client.setBody("");
-                client.setBodyType(bodyPanel.getBodyType());
-            case "Text":
-            case "JSON":
-            case "XML":
-                client.setBody(bodyPanel.getBody());
-                client.setBodyType(bodyPanel.getBodyType());
-                break;
-        }
-        
-        switch (urlPanel.getRequestMethod()) {
-            case "GET":
-                getRequest();
-                break;
-            case "POST":
-                postRequest();
-                break;
-            case "PUT":
-                putRequest();
-                break;
-            case "PATCH":
-                patchRequest();
-                break;
-            case "DELETE":
-                deleteRequest();
-                break;
-        }
-        
+        request();        
         logger.log(Level.INFO, "Request method: {0}, Auth type: {1}, Body type: {2}", 
                 new Object[]{urlPanel.getRequestMethod(), authPanel.getAuthType(), bodyPanel.getBodyType()});
     }
     
-    private void getRequest() {
-      
+    private void request() {
+        logger.log(Level.INFO, "URL: {0}", urlPanel.getUrl());
         processor.post(() -> {
             setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             ProgressHandle progressHandle = ProgressHandle.createHandle("Sending request");
             progressHandle.start();
+            
+            if (headersPanel.getRowCount() > 0) {
+                MultivaluedMap<String, String> headers = headersPanel.getValues();
+                client.setHeaders(headers);
+            }
 
-            try {
-                String response = client.get(urlPanel.getUrl());
-                MultivaluedMap<String, Object> responseHeaders = client.getResponseHeaders();
-                updateResponsePanel(response, responseHeaders);            
-            } catch (ProcessingException ex) {
-                logger.warning(ex.getMessage());
-                responsePanel.setResponse(ex.getMessage());
-            } finally {
-                progressHandle.finish();
-                setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            switch (authPanel.getAuthType()) {
+                case "No Auth":
+                    break;
+                case "Basic Auth":
+                    client.basicAuth(authPanel.getUsername(), String.valueOf(authPanel.getPassword()));
+                    break;
+                case "Bearer Token":
+                    // Do nothing. Token has already been added to the headers.
+                    break;
+                default:
+                    throw new AssertionError("Unknown auth type " + authPanel.getAuthType());
             }
             
-        });
-    }
-    
-    private void postRequest() {
-        processor.post(() -> {
-            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            ProgressHandle progressHandle = ProgressHandle.createHandle("Sending request");
-            progressHandle.start();
-
-            client.setBody(bodyPanel.getBody());
-
-            try {
-                String response = client.post(urlPanel.getUrl());
-                MultivaluedMap<String, Object> responseHeaders = client.getResponseHeaders();
-                updateResponsePanel(response, responseHeaders);
-            } catch (ProcessingException ex) {
-                logger.warning(ex.getMessage());
-                responsePanel.setResponse(ex.getMessage());
-            } finally {
-                progressHandle.finish();
-                setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            String method = urlPanel.getRequestMethod();
+            if (method.equals(HttpMethod.POST) || method.equals(HttpMethod.PUT) 
+                    || method.equals(HttpMethod.PATCH)) {
+                switch (bodyPanel.getBodyType()) {
+                    case "None":
+                        client.setBody("");
+                        client.setBodyType(bodyPanel.getBodyType());
+                        break;
+                    case "Text":
+                    case "JSON":
+                    case "XML":
+                        client.setBody(bodyPanel.getBody());
+                        client.setBodyType(bodyPanel.getBodyType());
+                        break;
+                    default:
+                        throw new AssertionError("Unknown body type " + bodyPanel.getBodyType());
+                }
             }
-            
-        });
-    }
-    
-    private void putRequest() {
-        processor.post(() -> {
-            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            ProgressHandle progressHandle = ProgressHandle.createHandle("Sending request");
-            progressHandle.start();
-
-            client.setBody(bodyPanel.getBody());
 
             try {
-                String response = client.put(urlPanel.getUrl());
+                String response = client.request(urlPanel.getUrl(), method);
                 MultivaluedMap<String, Object> responseHeaders = client.getResponseHeaders();
                 updateResponsePanel(response, responseHeaders);
             } catch (ProcessingException ex) {
@@ -346,52 +292,7 @@ public class RestClientTopComponent extends TopComponent {
             }
             
         });
-    }
-    
-    private void patchRequest() {
-        processor.post(() -> {
-            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            ProgressHandle progressHandle = ProgressHandle.createHandle("Sending request");
-            progressHandle.start();
-
-            client.setBody(bodyPanel.getBody());
-
-            try {
-                String response = client.patch(urlPanel.getUrl());
-                MultivaluedMap<String, Object> responseHeaders = client.getResponseHeaders();
-                updateResponsePanel(response, responseHeaders);
-            } catch (ProcessingException ex) {
-                logger.warning(ex.getMessage());
-                responsePanel.setResponse(ex.getMessage());
-            } finally {
-                progressHandle.finish();
-                setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-            }
-            
-        });
-    }
-    
-    private void deleteRequest() {
-        processor.post(() -> {
-            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            ProgressHandle progressHandle = ProgressHandle.createHandle("Sending request");
-            progressHandle.start();
-
-            client.setBody(bodyPanel.getBody());
-
-            try {
-                String response = client.delete(urlPanel.getUrl());
-                MultivaluedMap<String, Object> responseHeaders = client.getResponseHeaders();
-                updateResponsePanel(response, responseHeaders);
-            } catch (ProcessingException ex) {
-                logger.warning(ex.getMessage());
-                responsePanel.setResponse(ex.getMessage());
-            } finally {
-                progressHandle.finish();
-                setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-            }
-            
-        });
+        
     }
     
     private void updateResponsePanel(String response, MultivaluedMap<String, Object> responseHeaders) {
