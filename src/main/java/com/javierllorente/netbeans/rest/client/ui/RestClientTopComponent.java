@@ -251,28 +251,16 @@ public class RestClientTopComponent extends TopComponent {
             if (authPanel.getAuthType().equals(RestClient.BASIC_AUTH)) {
                 client.setCredentials(authPanel.getUsername(), authPanel.getPassword());
             }            
-            
-            String method = urlPanel.getRequestMethod();
-            if (method.equals(HttpMethod.POST) || method.equals(HttpMethod.PUT) 
-                    || method.equals(HttpMethod.PATCH)) {
-                switch (bodyPanel.getBodyType()) {
-                    case "None":
-                        client.setBody("");
-                        client.setBodyType(bodyPanel.getBodyType());
-                        break;
-                    case "Text":
-                    case "JSON":
-                    case "XML":
-                        client.setBody(bodyPanel.getBody());
-                        client.setBodyType(bodyPanel.getBodyType());
-                        break;
-                    default:
-                        throw new AssertionError("Unknown body type " + bodyPanel.getBodyType());
-                }
+
+            String body = "";
+            if (!bodyPanel.getBodyType().equals("None")) {
+                body = bodyPanel.getBody();
             }
+            client.setBody(body);
+            client.setBodyType(bodyPanel.getBodyType());
 
             try {
-                String response = client.request(urlPanel.getUrl(), method);
+                String response = client.request(urlPanel.getUrl(), urlPanel.getRequestMethod());
                 MultivaluedMap<String, Object> responseHeaders = client.getResponseHeaders();
                 updateResponsePanel(response, responseHeaders);
             } catch (ProcessingException ex) {
