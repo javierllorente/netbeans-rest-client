@@ -44,9 +44,15 @@ import org.glassfish.jersey.logging.LoggingFeature;
  * @author Javier Llorente <javier@opensuse.org>
  */
 public class RestClient {
+    public static final String NO_AUTH = "No Auth";
+    public static final String BEARER_TOKEN = "Bearer Token";
+    public static final String BASIC_AUTH = "Basic Auth";
     
     private static final Logger logger = Logger.getLogger(RestClient.class.getName());
     private final Client client;
+    private String authType;
+    private String username;
+    private String password;
     private MultivaluedMap<String, String> headers;
     private String body;
     private String bodyType;
@@ -65,13 +71,18 @@ public class RestClient {
                         Level.INFO,
                         LoggingFeature.Verbosity.HEADERS_ONLY,
                         8192));
+        authType = NO_AUTH;
         body = "";
         bodyType = "None";
     }
+
+    public void setAuthType(String authType) {
+        this.authType = authType;
+    }
     
-    public void basicAuth(String username, String password) {
-        HttpAuthenticationFeature feature = HttpAuthenticationFeature.basic(username, password);
-        client.register(feature);
+    public void setCredentials(String username, String password) {
+        this.username = username;
+        this.password = password;
     }
 
     public MultivaluedMap<String, String> getHeaders() {
@@ -110,14 +121,27 @@ public class RestClient {
         return "URL: " + uri.toString() + ", status: " + status + ", time: " + time + " ms";
     }
 
-    public String request(String resource, String method) 
+    public String request(String resource, String method)
             throws ClientErrorException, ServerErrorException, ProcessingException {
-              long startTime = System.currentTimeMillis();
-        
+        long startTime = System.currentTimeMillis();
         WebTarget target = client.target(resource);
+
+        switch (authType) {
+            case NO_AUTH:
+            case BEARER_TOKEN:
+                // Token must be added to the headers
+                break;
+            case BASIC_AUTH:
+                HttpAuthenticationFeature feature = HttpAuthenticationFeature.basic(username, password);
+                target.register(feature);
+                break;
+            default:
+                throw new AssertionError("Unknown auth type " + authType);
+        }
+        
         Invocation.Builder invocationBuilder = target.request();
         setMediaTypeAccepted(invocationBuilder);
-        
+
         if (headers != null) {
             setRequestHeaders(invocationBuilder);
         }    

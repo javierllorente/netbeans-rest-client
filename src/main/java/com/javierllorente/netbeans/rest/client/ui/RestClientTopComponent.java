@@ -246,19 +246,11 @@ public class RestClientTopComponent extends TopComponent {
                 MultivaluedMap<String, String> headers = headersPanel.getValues();
                 client.setHeaders(headers);
             }
-
-            switch (authPanel.getAuthType()) {
-                case "No Auth":
-                    break;
-                case "Basic Auth":
-                    client.basicAuth(authPanel.getUsername(), String.valueOf(authPanel.getPassword()));
-                    break;
-                case "Bearer Token":
-                    // Do nothing. Token has already been added to the headers.
-                    break;
-                default:
-                    throw new AssertionError("Unknown auth type " + authPanel.getAuthType());
-            }
+            
+            client.setAuthType(authPanel.getAuthType());            
+            if (authPanel.getAuthType().equals(RestClient.BASIC_AUTH)) {
+                client.setCredentials(authPanel.getUsername(), authPanel.getPassword());
+            }            
             
             String method = urlPanel.getRequestMethod();
             if (method.equals(HttpMethod.POST) || method.equals(HttpMethod.PUT) 
