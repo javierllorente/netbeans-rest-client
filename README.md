@@ -2,9 +2,10 @@
 A REST client for NetBeans
 
 Features (WIP)
-- Supports GET, POST and PUT request methods
+- Sending GET, POST, PUT, PATCH or DELETE requests
 - Authorisation: Basic Auth and Bearer Token
-- Adding headers and body (text, JSON or XML)
+- Adding headers
+- Adding body (text, JSON or XML)
 - Displays response headers
 
 Instructions
