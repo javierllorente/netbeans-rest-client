@@ -177,7 +177,7 @@ public class RestClient {
             case HttpMethod.PUT:
                 return invocationBuilder.put(Entity.entity(body, getBodyMediaType()));
             case HttpMethod.PATCH:
-                return invocationBuilder.build("PATCH", Entity.entity(body, getBodyMediaType())).invoke();
+                return invocationBuilder.build("PATCH", Entity.entity(body, getBodyMediaType(method))).invoke();
             case HttpMethod.DELETE:
                 return invocationBuilder.delete();
             default:
@@ -202,15 +202,21 @@ public class RestClient {
     }
     
     private MediaType getBodyMediaType() {
+        return getBodyMediaType("");
+    }
+    
+    private MediaType getBodyMediaType(String method) {
         MediaType mediaType = null;
-        
+
         switch (bodyType) {
             case "None":
             case "Text":
                 mediaType = MediaType.TEXT_PLAIN_TYPE;
                 break;
             case "JSON":
-                mediaType = MediaType.APPLICATION_JSON_TYPE;
+                mediaType = method.equals(HttpMethod.PATCH)
+                        ? MediaType.APPLICATION_JSON_PATCH_JSON_TYPE
+                        : MediaType.APPLICATION_JSON_TYPE;
                 break;
             case "XML":
                 mediaType = MediaType.APPLICATION_XML_TYPE;
