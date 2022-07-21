@@ -73,7 +73,7 @@ public class UrlPanel extends javax.swing.JPanel {
         methodComboBox.setSelectedItem(method);
     }
     
-    public void addActionListener(ActionListener al) {
+    public void addSendButtonActionListener(ActionListener al) {
         sendButton.addActionListener(al);
     }
     

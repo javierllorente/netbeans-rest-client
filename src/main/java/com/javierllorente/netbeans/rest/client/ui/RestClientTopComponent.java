@@ -127,7 +127,7 @@ public class RestClientTopComponent extends TopComponent {
             bodyPanel.setComboBoxEnabled(enableComboBox);
         });
         
-        urlPanel.addActionListener((ae) -> {
+        urlPanel.addSendButtonActionListener((ae) -> {
             sendRequest();
         });
         
