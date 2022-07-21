@@ -321,7 +321,7 @@ public class RestClientTopComponent extends TopComponent {
 
         splitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
 
-        requestPanel.setPreferredSize(new java.awt.Dimension(800, 279));
+        requestPanel.setPreferredSize(new java.awt.Dimension(800, 240));
 
         requestTabbedPane.setPreferredSize(new java.awt.Dimension(705, 150));
         requestTabbedPane.addTab("Params", paramsPanel);
@@ -334,7 +334,7 @@ public class RestClientTopComponent extends TopComponent {
         requestPanelLayout.setHorizontalGroup(
             requestPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(requestPanelLayout.createSequentialGroup()
-                .addComponent(requestTabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 788, Short.MAX_VALUE)
+                .addComponent(requestTabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
             .addComponent(urlPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );

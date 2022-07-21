@@ -49,7 +49,7 @@
         <Container class="javax.swing.JPanel" name="requestPanel">
           <Properties>
             <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-              <Dimension value="[800, 279]"/>
+              <Dimension value="[800, 240]"/>
             </Property>
           </Properties>
           <Constraints>
