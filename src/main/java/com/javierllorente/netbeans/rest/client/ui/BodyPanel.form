@@ -55,6 +55,7 @@
             <StringItem index="3" value="XML"/>
           </StringArray>
         </Property>
+        <Property name="enabled" type="boolean" value="false"/>
         <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
           <Dimension value="[88, 22]"/>
         </Property>

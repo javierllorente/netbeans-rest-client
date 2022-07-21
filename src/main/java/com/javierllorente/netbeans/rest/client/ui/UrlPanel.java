@@ -77,6 +77,10 @@ public class UrlPanel extends javax.swing.JPanel {
         sendButton.addActionListener(al);
     }
     
+    public void addComboBoxActionListener(ActionListener al) {
+        methodComboBox.addActionListener(al);
+    }
+    
     public void addUrlKeyListener(KeyListener kl) {
         urlTextField.addKeyListener(kl);
     }

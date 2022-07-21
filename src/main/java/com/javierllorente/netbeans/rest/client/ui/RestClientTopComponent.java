@@ -23,6 +23,7 @@ import com.javierllorente.netbeans.rest.client.event.TableParamsListener;
 import com.javierllorente.netbeans.rest.client.event.TokenDocumentListener;
 import com.javierllorente.netbeans.rest.client.event.UrlDocumentListener;
 import com.javierllorente.netbeans.rest.client.UserAgent;
+import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.core.MultivaluedMap;
 import java.awt.Cursor;
@@ -115,7 +116,16 @@ public class RestClientTopComponent extends TopComponent {
             public void focusLost(FocusEvent e) {
                 paramsPanel.addTableModelListener(tableParamsListener);
             }
-        });        
+        });
+
+        urlPanel.addComboBoxActionListener((ae) -> {
+            boolean enableComboBox = !(urlPanel.getRequestMethod().equals(HttpMethod.GET)
+                    || urlPanel.getRequestMethod().equals(HttpMethod.DELETE));
+            if (!enableComboBox) {
+                bodyPanel.setBodyType("None");
+            }
+            bodyPanel.setComboBoxEnabled(enableComboBox);
+        });
         
         urlPanel.addActionListener((ae) -> {
             sendRequest();

@@ -35,8 +35,16 @@ public class BodyPanel extends javax.swing.JPanel {
         return bodyComboBox.getSelectedItem().toString();
     }
     
+    public void setBodyType(String bodyType) {
+        bodyComboBox.setSelectedItem(bodyType);
+    }
+    
     public String getBody() {
         return editorPane.getText();
+    }
+    
+    public void setComboBoxEnabled(boolean enable) {
+        bodyComboBox.setEnabled(enable);
     }
 
     /**
@@ -58,6 +66,7 @@ public class BodyPanel extends javax.swing.JPanel {
         setPreferredSize(new java.awt.Dimension(800, 144));
 
         bodyComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "None", "Text", "JSON", "XML" }));
+        bodyComboBox.setEnabled(false);
         bodyComboBox.setPreferredSize(new java.awt.Dimension(88, 22));
         bodyComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
