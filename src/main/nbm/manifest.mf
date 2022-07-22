@@ -5,4 +5,4 @@ OpenIDE-Module-Name: REST Client
 OpenIDE-Module-Display-Category: Tools
 OpenIDE-Module-Short-Description: A REST client for NetBeans
 OpenIDE-Module-Long-Description: Provides a basic REST client for NetBeans
-OpenIDE-Module-Implementation-Version: 0.1
+OpenIDE-Module-Implementation-Version: 0.2
