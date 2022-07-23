@@ -26,6 +26,7 @@
     </licenses>
     <scm>
         <connection>scm:git:https://github.com/javierllorente/netbeans-rest-client</connection>
+        <developerConnection>scm:git:https://github.com/javierllorente/netbeans-rest-client.git</developerConnection>
         <tag>HEAD</tag>
         <url>https://github.com/javierllorente/netbeans-rest-client</url>
     </scm>
