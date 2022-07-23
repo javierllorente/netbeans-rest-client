@@ -58,7 +58,10 @@
                 <version>4.7</version>
                 <extensions>true</extensions>
                 <configuration>
-                    <verifyRuntime>false</verifyRuntime> 
+                    <author>Javier Llorente</author>
+                    <licenseFile>LICENSE</licenseFile>
+                    <licenseName>Apache-2.0</licenseName>
+                    <verifyRuntime>false</verifyRuntime>
                 </configuration>
             </plugin>
             <plugin>
