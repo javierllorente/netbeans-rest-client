@@ -286,6 +286,13 @@ public class RestClientTopComponent extends TopComponent {
     
     private void updateResponsePanel(String response, MultivaluedMap<String, Object> responseHeaders) {
         SwingUtilities.invokeLater(() -> {
+            
+            String contentType = "";
+            if (responseHeaders.containsKey("content-type") && !responseHeaders.get("content-type").isEmpty()) {
+                contentType = (String) responseHeaders.get("content-type").get(0);
+            }            
+            responsePanel.setContentType(contentType);            
+            
             responsePanel.setResponse(response);
             responsePanel.setStatus("Status: " + client.getStatus() + " " + client.getStatusText()
                     + "  Time: " + client.getElapsedTime() + " ms");

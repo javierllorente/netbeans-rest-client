@@ -23,7 +23,7 @@ import javax.swing.JLayer;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
-import javax.swing.text.StyledEditorKit;
+import org.openide.text.CloneableEditorSupport;
 
 /**
  *
@@ -46,7 +46,6 @@ public class ResponsePanel extends JPanel {
         responsePane.setEditable(false);
         responsePane.setBackground(new java.awt.Color(255, 255, 255));
         responsePane.setCursor(new java.awt.Cursor(java.awt.Cursor.TEXT_CURSOR));
-        responsePane.setEditorKit(new StyledEditorKit());        
         JScrollPane responseScrollPane = new JScrollPane();
         responseScrollPane.setViewportView(responsePane);
         responseTabbedPane.addTab("Body", responseScrollPane);
@@ -58,6 +57,22 @@ public class ResponsePanel extends JPanel {
         statusLabel = new StatusLabel();
         JLayer<JComponent> decoratedPane = new JLayer<>(responseTabbedPane, statusLabel);
         add(decoratedPane);
+    }
+    
+    public void setContentType(String contentType) {
+        String mimePath = "text/plain";
+
+        if (contentType.startsWith("application/xml")) {
+            mimePath = "text/xml";
+        } else if (contentType.startsWith("application/json")) {
+            mimePath = "text/x-json";
+        } else if (contentType.startsWith("application/javascript")) {
+            mimePath = "application/json";
+        } else if (contentType.startsWith("text/html")) {
+            mimePath = "text/html";
+        }
+
+        responsePane.setEditorKit(CloneableEditorSupport.getEditorKit(mimePath));
     }
     
     public void setResponse(String response) {
