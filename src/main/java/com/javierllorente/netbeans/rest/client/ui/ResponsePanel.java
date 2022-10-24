@@ -44,7 +44,6 @@ public class ResponsePanel extends JPanel {
         
         responsePane = new JEditorPane();
         responsePane.setEditable(false);
-        responsePane.setBackground(new java.awt.Color(255, 255, 255));
         responsePane.setCursor(new java.awt.Cursor(java.awt.Cursor.TEXT_CURSOR));
         JScrollPane responseScrollPane = new JScrollPane();
         responseScrollPane.setViewportView(responsePane);
