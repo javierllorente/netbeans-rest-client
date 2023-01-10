@@ -157,7 +157,7 @@ public class RestClient {
             responseHeaders = response.getHeaders();
             response.bufferEntity();
 
-            if (response.getMediaType().equals(MediaType.APPLICATION_JSON_TYPE)) {
+            if (response.getMediaType() != null && response.getMediaType().equals(MediaType.APPLICATION_JSON_TYPE)) {
                 JsonObject jsonObject = response.readEntity(JsonObject.class);
                 str = Utils.jsonPrettyFormat(jsonObject);
             } else {
