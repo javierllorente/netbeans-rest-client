@@ -269,7 +269,11 @@ public class RestClientTopComponent extends TopComponent {
             client.setBodyType(bodyPanel.getBodyType());
 
             try {
-                String response = client.request(urlPanel.getUrl(), urlPanel.getRequestMethod());
+                String url = urlPanel.getUrl();
+                if (!url.startsWith("http")) {
+                    url = "http://" + urlPanel.getUrl();
+                }
+                String response = client.request(url, urlPanel.getRequestMethod());
                 MultivaluedMap<String, Object> responseHeaders = client.getResponseHeaders();
                 updateResponsePanel(response, responseHeaders);
             } catch (ProcessingException ex) {
