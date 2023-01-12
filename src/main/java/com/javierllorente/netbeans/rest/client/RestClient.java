@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
@@ -64,6 +65,7 @@ public class RestClient {
     public RestClient() {
 
         client = ClientBuilder.newClient(new ClientConfig()
+                .connectorProvider(new ApacheConnectorProvider())
                 .property(ClientProperties.CONNECT_TIMEOUT, 20000)
                 .property(ClientProperties.FOLLOW_REDIRECTS, true)
                 .property(JsonGenerator.PRETTY_PRINTING, true))
