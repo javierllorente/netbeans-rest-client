@@ -207,5 +207,10 @@
             <artifactId>org-openide-text</artifactId>
             <version>RELEASE130</version>
         </dependency>
+        <dependency>
+            <groupId>org.netbeans.api</groupId>
+            <artifactId>org-netbeans-modules-options-api</artifactId>
+            <version>RELEASE130</version>
+        </dependency>
     </dependencies>
 </project>
