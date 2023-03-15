@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Javier Llorente <javier@opensuse.org>.
+ * Copyright 2022-2023 Javier Llorente <javier@opensuse.org>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.javierllorente.netbeans.rest.client;
 
+import com.javierllorente.netbeans.rest.client.ui.RestClientOptionsPanel;
 import jakarta.json.JsonObject;
 import jakarta.json.stream.JsonGenerator;
 import jakarta.ws.rs.ClientErrorException;
@@ -30,15 +31,24 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 import java.net.URI;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.prefs.Preferences;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
 import org.glassfish.jersey.logging.LoggingFeature;
+import org.openide.util.NbPreferences;
 
 /**
  *
@@ -50,7 +60,7 @@ public class RestClient {
     public static final String BASIC_AUTH = "Basic Auth";
     
     private static final Logger logger = Logger.getLogger(RestClient.class.getName());
-    private final Client client;
+    private Client client;
     private String authType;
     private String username;
     private String password;
@@ -63,19 +73,53 @@ public class RestClient {
     private long elapsedTime;
 
     public RestClient() {
-
-        client = ClientBuilder.newClient(new ClientConfig()
-                .connectorProvider(new ApacheConnectorProvider())
-                .property(ClientProperties.CONNECT_TIMEOUT, 20000)
-                .property(ClientProperties.FOLLOW_REDIRECTS, true)
-                .property(JsonGenerator.PRETTY_PRINTING, true))
-                .register(new LoggingFeature(logger,
-                        Level.INFO,
-                        LoggingFeature.Verbosity.HEADERS_ONLY,
-                        8192));
+        Preferences preferences = NbPreferences.forModule(RestClientOptionsPanel.class);
+        preferences.addPreferenceChangeListener((pce) -> {
+            if (pce.getKey().equals(RestClientOptionsPanel.VERIFY_SSL_CERTIFICATES)) {
+                buildClient(Boolean.parseBoolean(pce.getNewValue()));
+            }
+        });
+        buildClient(preferences.getBoolean(RestClientOptionsPanel.VERIFY_SSL_CERTIFICATES, true));
         authType = NO_AUTH;
         body = "";
         bodyType = "None";
+    }
+
+    private void buildClient(boolean verifySslCertificates) {
+        ClientConfig config = new ClientConfig()
+                .connectorProvider(new ApacheConnectorProvider())
+                .property(ClientProperties.CONNECT_TIMEOUT, 20000)
+                .property(ClientProperties.FOLLOW_REDIRECTS, true)
+                .property(JsonGenerator.PRETTY_PRINTING, true)
+                .register(new LoggingFeature(logger, Level.INFO, LoggingFeature.Verbosity.HEADERS_ONLY, 8192));
+        client = verifySslCertificates
+                ? ClientBuilder.newBuilder().withConfig(config).build()
+                : ClientBuilder.newBuilder().sslContext(getSslContext()).withConfig(config).build();
+    }
+    
+    private SSLContext getSslContext() {
+        SSLContext sslContext = null;
+        try {
+            sslContext = SSLContext.getInstance("TLS");
+            TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
+                @Override
+                public X509Certificate[] getAcceptedIssuers() {
+                    return null;
+                }
+
+                @Override
+                public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                }
+
+                @Override
+                public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                }
+            }};
+            sslContext.init(null, trustAllCerts, new SecureRandom());
+        } catch (NoSuchAlgorithmException | KeyManagementException ex) {
+            Logger.getLogger(RestClient.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return sslContext;
     }
 
     public void setAuthType(String authType) {

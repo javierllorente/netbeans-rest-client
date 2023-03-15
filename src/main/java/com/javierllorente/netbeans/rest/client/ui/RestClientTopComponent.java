@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Javier Llorente <javier@opensuse.org>.
+ * Copyright 2022-2023 Javier Llorente <javier@opensuse.org>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -275,10 +275,15 @@ public class RestClientTopComponent extends TopComponent {
                 }
                 String response = client.request(url, urlPanel.getRequestMethod());
                 MultivaluedMap<String, Object> responseHeaders = client.getResponseHeaders();
-                updateResponsePanel(response, responseHeaders);
+                updateResponsePanel(response, responseHeaders);  
             } catch (ProcessingException ex) {
                 logger.warning(ex.getMessage());
-                responsePanel.setResponse(ex.getMessage());
+                String response = (ex.getMessage().contains("PKIX path building failed"))
+                        ? "Could not get response: failed to verify SSL certificate\n"
+                        + "SSL certificate verification is enabled. "
+                        + "You may disable it under Tools->Options->Miscellaneous->REST Client"
+                        : ex.getMessage();
+                responsePanel.setResponse(response);
             } finally {
                 progressHandle.finish();
                 setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
