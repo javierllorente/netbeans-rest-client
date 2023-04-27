@@ -16,7 +16,6 @@
 package com.javierllorente.netbeans.rest.client;
 
 import com.javierllorente.netbeans.rest.client.ui.RestClientOptionsPanel;
-import jakarta.json.JsonObject;
 import jakarta.json.stream.JsonGenerator;
 import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.HttpMethod;
@@ -202,13 +201,7 @@ public class RestClient {
 
             responseHeaders = response.getHeaders();
             response.bufferEntity();
-
-            if (response.getMediaType() != null && response.getMediaType().equals(MediaType.APPLICATION_JSON_TYPE)) {
-                JsonObject jsonObject = response.readEntity(JsonObject.class);
-                str = Utils.jsonPrettyFormat(jsonObject);
-            } else {
-                str = response.readEntity(String.class);
-            }
+            str = response.readEntity(String.class);
         }
         
         return str;

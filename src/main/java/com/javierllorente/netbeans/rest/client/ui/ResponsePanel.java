@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Javier Llorente <javier@opensuse.org>.
+ * Copyright 2022-2023 Javier Llorente <javier@opensuse.org>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,23 @@
  */
 package com.javierllorente.netbeans.rest.client.ui;
 
+import com.javierllorente.netbeans.rest.client.Utils;
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonReader;
+import jakarta.ws.rs.core.MediaType;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.io.StringReader;
+import javax.swing.ButtonGroup;
 import javax.swing.JComponent;
 import javax.swing.JEditorPane;
 import javax.swing.JLayer;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
+import javax.swing.JToggleButton;
 import org.openide.text.CloneableEditorSupport;
 
 /**
@@ -33,8 +42,11 @@ public class ResponsePanel extends JPanel {
 
     private final JTabbedPane responseTabbedPane;
     private final JEditorPane responsePane;
+    private final JToggleButton prettyButton;
     private final TablePanel responseHeadersTable;
     private final StatusLabel statusLabel;
+    private String mimePath;
+    private String response;
 
     public ResponsePanel() {        
         super(new BorderLayout());
@@ -47,8 +59,28 @@ public class ResponsePanel extends JPanel {
         responsePane.setCursor(new java.awt.Cursor(java.awt.Cursor.TEXT_CURSOR));
         JScrollPane responseScrollPane = new JScrollPane();
         responseScrollPane.setViewportView(responsePane);
-        responseTabbedPane.addTab("Body", responseScrollPane);
         
+        JPanel topPanel = new JPanel();
+        topPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+        
+        prettyButton = new JToggleButton("Pretty", true);
+        JToggleButton rawButton = new JToggleButton("Raw", false);
+        prettyButton.addItemListener((ie) -> {
+            showResponse();
+        });
+        
+        ButtonGroup formatGroup = new ButtonGroup();
+        formatGroup.add(prettyButton);
+        formatGroup.add(rawButton);
+        topPanel.add(prettyButton);
+        topPanel.add(rawButton);
+        
+        JPanel responseBodyPanel = new JPanel();
+        responseBodyPanel.setLayout(new BorderLayout());
+        responseBodyPanel.add(topPanel, BorderLayout.NORTH);
+        responseBodyPanel.add(responseScrollPane, BorderLayout.CENTER);
+        
+        responseTabbedPane.addTab("Body", responseBodyPanel);        
         responseHeadersTable = new TablePanel();
         responseHeadersTable.setReadOnly();
         responseTabbedPane.addTab("Headers", responseHeadersTable);
@@ -56,26 +88,49 @@ public class ResponsePanel extends JPanel {
         statusLabel = new StatusLabel();
         JLayer<JComponent> decoratedPane = new JLayer<>(responseTabbedPane, statusLabel);
         add(decoratedPane);
+        
+        mimePath = MediaType.TEXT_PLAIN;
     }
     
     public void setContentType(String contentType) {
-        String mimePath = "text/plain";
-
-        if (contentType.startsWith("application/xml")) {
-            mimePath = "text/xml";
-        } else if (contentType.startsWith("application/json")) {
+        if (contentType.startsWith(MediaType.APPLICATION_XML)) {
+            mimePath = MediaType.TEXT_XML;
+        } else if (contentType.startsWith(MediaType.APPLICATION_JSON)) {
             mimePath = "text/x-json";
         } else if (contentType.startsWith("application/javascript")) {
-            mimePath = "application/json";
-        } else if (contentType.startsWith("text/html")) {
-            mimePath = "text/html";
+            mimePath = MediaType.APPLICATION_JSON;
+        } else if (contentType.startsWith(MediaType.TEXT_HTML)) {
+            mimePath = MediaType.TEXT_HTML;
         }
-
         responsePane.setEditorKit(CloneableEditorSupport.getEditorKit(mimePath));
     }
     
     public void setResponse(String response) {
-        responsePane.setText(response);
+        this.response = response;
+    }
+    
+    private String formatResponse() {
+        String prettyOrNotResponse = response;
+        if (prettyButton.isSelected()) {
+            switch (mimePath) {
+                case "text/x-json":
+                case MediaType.APPLICATION_JSON:
+                    try (JsonReader jsonReader = Json.createReader(new StringReader(prettyOrNotResponse))) {
+                        JsonObject jsonObject = jsonReader.readObject();
+                        prettyOrNotResponse = Utils.jsonPrettyFormat(jsonObject);
+                    }
+                break;
+                case MediaType.TEXT_XML:
+                    prettyOrNotResponse = Utils.xmlPrettyFormat(prettyOrNotResponse);
+                    break;
+            }
+        }
+        return prettyOrNotResponse;        
+    }
+    
+    public void showResponse() {
+        String prettyOrNotResponse = formatResponse();
+        responsePane.setText(prettyOrNotResponse);
         responsePane.setCaretPosition(0);
     }
     

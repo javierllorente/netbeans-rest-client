@@ -284,6 +284,7 @@ public class RestClientTopComponent extends TopComponent {
                         + "You may disable it under Tools->Options->Miscellaneous->REST Client"
                         : ex.getMessage();
                 responsePanel.setResponse(response);
+                responsePanel.showResponse();
             } finally {
                 progressHandle.finish();
                 setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
@@ -303,6 +304,7 @@ public class RestClientTopComponent extends TopComponent {
             responsePanel.setContentType(contentType);            
             
             responsePanel.setResponse(response);
+            responsePanel.showResponse();
             responsePanel.setStatus("Status: " + client.getStatus() + " " + client.getStatusText()
                     + "  Time: " + client.getElapsedTime() + " ms");
 
