@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Javier Llorente <javier@opensuse.org>
+ * Copyright (C) 2022-2023 Javier Llorente <javier@opensuse.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ package com.javierllorente.netbeans.rest.client;
 public class UserAgent {
 
     public final static String NAME = "RestClient";
-    public final static String VERSION = "0.3.2";
+    public final static String VERSION = "0.4.0";
     public final static String FULL = NAME + "/" + VERSION 
             + " (" + System.getProperty("os.name") + " " 
             + System.getProperty("os.version") + "; " 
