@@ -98,8 +98,6 @@ public class UrlPanel extends javax.swing.JPanel {
         urlTextField = new javax.swing.JTextField();
         sendButton = new javax.swing.JButton();
 
-        setPreferredSize(new java.awt.Dimension(788, 25));
-
         methodComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "GET", "POST", "PUT", "PATCH", "DELETE" }));
 
         org.openide.awt.Mnemonics.setLocalizedText(sendButton, "Send");
@@ -124,7 +122,7 @@ public class UrlPanel extends javax.swing.JPanel {
                     .addComponent(methodComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(urlTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(sendButton))
-                .addGap(0, 3, Short.MAX_VALUE))
+                .addGap(0, 0, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
