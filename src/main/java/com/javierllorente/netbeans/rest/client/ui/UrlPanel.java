@@ -18,6 +18,7 @@ package com.javierllorente.netbeans.rest.client.ui;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyListener;
+import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentListener;
 
 /**
@@ -32,15 +33,15 @@ public class UrlPanel extends javax.swing.JPanel {
     public UrlPanel() {
         initComponents();
     }
-    
+
     public String getUrl() {
         return urlTextField.getText();
     }
-    
+
     public void setUrl(String url) {
         urlTextField.setText(url);
     }
-    
+
     public String getDisplayUrl() {
         String url = urlTextField.getText();
         if (url.length() > 19) {
@@ -48,39 +49,41 @@ public class UrlPanel extends javax.swing.JPanel {
         }
         return url;
     }
-    
+
     public void addUrlDocumentListener(DocumentListener dl) {
         urlTextField.getDocument().addDocumentListener(dl);
     }
-    
+
     public void removeUrlDocumentListener(DocumentListener dl) {
         urlTextField.getDocument().removeDocumentListener(dl);
     }
-    
+
     public void addUrlFocusListener(FocusListener fl) {
         urlTextField.addFocusListener(fl);
     }
-    
+
     public void requestUrlFocus() {
-        urlTextField.requestFocus();
+        SwingUtilities.invokeLater(() -> {
+            urlTextField.requestFocus();
+        });
     }
-    
+
     public String getRequestMethod() {
         return methodComboBox.getSelectedItem().toString();
     }
-    
+
     public void setRequestMethod(String method) {
         methodComboBox.setSelectedItem(method);
     }
-    
+
     public void addSendButtonActionListener(ActionListener al) {
         sendButton.addActionListener(al);
     }
-    
+
     public void addComboBoxActionListener(ActionListener al) {
         methodComboBox.addActionListener(al);
     }
-    
+
     public void addUrlKeyListener(KeyListener kl) {
         urlTextField.addKeyListener(kl);
     }
@@ -96,6 +99,7 @@ public class UrlPanel extends javax.swing.JPanel {
 
         methodComboBox = new javax.swing.JComboBox<>();
         urlTextField = new javax.swing.JTextField();
+        urlTextField.putClientProperty("JTextField.selectAllOnFocusPolicy", "never");
         sendButton = new javax.swing.JButton();
 
         methodComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "GET", "POST", "PUT", "PATCH", "DELETE" }));

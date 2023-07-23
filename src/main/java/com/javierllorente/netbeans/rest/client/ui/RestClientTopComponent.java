@@ -208,11 +208,7 @@ public class RestClientTopComponent extends TopComponent {
         String url = p.getProperty(URL_PROPERTY);
         
         if (!url.isEmpty()) {
-            paramsPanel.removeTableModelListener(tableParamsListener);
-            urlPanel.setUrl(url);
-            paramsPanel.addTableModelListener(tableParamsListener);
-            setDisplayName(urlPanel.getRequestMethod() + " " + urlPanel.getDisplayUrl());
-            setToolTipText(urlPanel.getUrl());
+            setUrl(url);
         }
         
         String requestMethod = p.getProperty(REQUEST_METHOD_PROPERTY);
@@ -233,7 +229,16 @@ public class RestClientTopComponent extends TopComponent {
         String headers = p.getProperty(HEADERS_PROPERTY);
         headersPanel.setValuesString(headers);
 
-    }    
+    }
+
+    public void setUrl(String url) {
+        paramsPanel.removeTableModelListener(tableParamsListener);
+        urlPanel.setUrl(url);
+        paramsPanel.addTableModelListener(tableParamsListener);
+        setDisplayName(urlPanel.getRequestMethod() + " " + urlPanel.getDisplayUrl());
+        setToolTipText(urlPanel.getUrl());
+        urlPanel.requestUrlFocus();
+    }
     
     private void sendRequest() {
         responsePanel.clear();
