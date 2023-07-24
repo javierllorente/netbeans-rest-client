@@ -63,6 +63,8 @@
                     <licenseFile>LICENSE</licenseFile>
                     <licenseName>Apache-2.0</licenseName>
                     <verifyRuntime>false</verifyRuntime>
+                    <keystore>${keystore}</keystore>
+                    <keystorealias>${project.artifactId}</keystorealias>
                 </configuration>
             </plugin>
             <plugin>
