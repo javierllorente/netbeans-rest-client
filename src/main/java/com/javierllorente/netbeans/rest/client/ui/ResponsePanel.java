@@ -41,7 +41,7 @@ import org.openide.text.CloneableEditorSupport;
 public class ResponsePanel extends JPanel {
 
     private final JTabbedPane responseTabbedPane;
-    private final JEditorPane responsePane;
+    private final JEditorPane responseEditorPane;
     private final JToggleButton prettyButton;
     private final TablePanel responseHeadersTable;
     private final StatusLabel statusLabel;
@@ -54,12 +54,12 @@ public class ResponsePanel extends JPanel {
         responseTabbedPane = new JTabbedPane();
         responseTabbedPane.setPreferredSize(new Dimension(705, 150));
         
-        responsePane = new JEditorPane();
-        responsePane.setEditable(false);
-        responsePane.setCursor(new java.awt.Cursor(java.awt.Cursor.TEXT_CURSOR));
+        responseEditorPane = new JEditorPane();
+        responseEditorPane.setEditable(false);
+        responseEditorPane.setCursor(new java.awt.Cursor(java.awt.Cursor.TEXT_CURSOR));
         JScrollPane responseScrollPane = new JScrollPane();
-        responseScrollPane.setViewportView(responsePane);
-        
+        responseScrollPane.setViewportView(responseEditorPane);
+       
         JPanel topPanel = new JPanel();
         topPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
         
@@ -102,7 +102,7 @@ public class ResponsePanel extends JPanel {
         } else if (contentType.startsWith(MediaType.TEXT_HTML)) {
             mimePath = MediaType.TEXT_HTML;
         }
-        responsePane.setEditorKit(CloneableEditorSupport.getEditorKit(mimePath));
+        responseEditorPane.setEditorKit(CloneableEditorSupport.getEditorKit(mimePath));
     }
     
     public void setResponse(String response) {
@@ -130,13 +130,13 @@ public class ResponsePanel extends JPanel {
     
     public void showResponse() {
         String prettyOrNotResponse = formatResponse();
-        responsePane.setText(prettyOrNotResponse);
-        responsePane.setCaretPosition(0);
+        responseEditorPane.setText(prettyOrNotResponse);
+        responseEditorPane.setCaretPosition(0);
     }
     
     public void clearResponse() {
-        responsePane.setText("");
-        responsePane.setCaretPosition(0);
+        responseEditorPane.setText("");
+        responseEditorPane.setCaretPosition(0);
     }
     
     public void addHeader(String key, String value) {
