@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Javier Llorente <javier@opensuse.org>.
+ * Copyright 2022-2023 Javier Llorente <javier@opensuse.org>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@
 package com.javierllorente.netbeans.rest.client;
 
 import jakarta.json.Json;
+import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
+import jakarta.json.JsonStructure;
 import jakarta.json.JsonWriter;
 import jakarta.json.JsonWriterFactory;
 import jakarta.json.stream.JsonGenerator;
@@ -43,13 +45,17 @@ public class Utils {
     private Utils() {
     }
 
-    public static String jsonPrettyFormat(JsonObject jsonObject) {
+    public static String jsonPrettyFormat(JsonStructure jsonStructure) {
         Map<String, Object> map = new HashMap<>();
         map.put(JsonGenerator.PRETTY_PRINTING, true);
         JsonWriterFactory writerFactory = Json.createWriterFactory(map);
         StringWriter stringWriter = new StringWriter();
-        try (final JsonWriter jsonWriter = writerFactory.createWriter(stringWriter)) {
-            jsonWriter.writeObject(jsonObject);
+        try (final JsonWriter jsonWriter = writerFactory.createWriter(stringWriter)) {            
+            if (jsonStructure instanceof JsonObject) {
+                jsonWriter.writeObject((JsonObject) jsonStructure);
+            } else {
+                jsonWriter.writeArray((JsonArray) jsonStructure);
+            }
         }
         return stringWriter.toString();
     }
