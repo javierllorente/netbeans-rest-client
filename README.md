@@ -7,6 +7,8 @@ Features (WIP)
 - Adding headers
 - Adding body (text, JSON or XML)
 - Displays response headers
+- Making JSON/XML response pretty/ugly
+- Opening links of a JSON/XML response in a new tab
 
 Instructions
 - Install the module (Tools -> Plugins -> Available Plugins)
