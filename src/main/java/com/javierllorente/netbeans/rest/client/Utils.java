@@ -22,8 +22,11 @@ import jakarta.json.JsonStructure;
 import jakarta.json.JsonWriter;
 import jakarta.json.JsonWriterFactory;
 import jakarta.json.stream.JsonGenerator;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import javax.xml.XMLConstants;
@@ -69,7 +72,7 @@ public class Utils {
         transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
         transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
         try {
-            Transformer transformer = transformerFactory.newTransformer();
+            Transformer transformer = transformerFactory.newTransformer(readXsl());
             transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
             transformer.setOutputProperty(OutputKeys.INDENT, "yes");
             transformer.transform(xmlInput, xmlOutput);
@@ -77,6 +80,21 @@ public class Utils {
             Exceptions.printStackTrace(ex);
         }
         return xmlOutput.getWriter().toString();
+    }
+    
+    private static Source readXsl() {
+        InputStream inputStream = Utils.class.getResourceAsStream("prettyprint.xsl");
+        Source xslSource = null;
+        try {
+            if (inputStream != null) {
+                String xsl = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+                inputStream.close();
+                xslSource = new StreamSource(new StringReader(xsl));
+            }
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return xslSource;
     }
     
 }
