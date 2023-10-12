@@ -15,6 +15,7 @@
  */
 package com.javierllorente.netbeans.rest.client.ui;
 
+import com.javierllorente.netbeans.rest.client.editor.RestMediaType;
 import com.javierllorente.netbeans.rest.client.Utils;
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
@@ -94,11 +95,10 @@ public class ResponsePanel extends JPanel {
     
     public void setContentType(String contentType) {
         if (contentType.startsWith(MediaType.APPLICATION_XML)) {
-            mimePath = MediaType.TEXT_XML;
-        } else if (contentType.startsWith(MediaType.APPLICATION_JSON)) {
-            mimePath = "text/x-json";
-        } else if (contentType.startsWith("application/javascript")) {
-            mimePath = MediaType.APPLICATION_JSON;
+            mimePath = RestMediaType.XML;
+        } else if (contentType.startsWith(MediaType.APPLICATION_JSON) 
+                || contentType.startsWith("application/javascript")) {
+            mimePath = RestMediaType.JSON;
         } else if (contentType.startsWith(MediaType.TEXT_HTML)) {
             mimePath = MediaType.TEXT_HTML;
         }
@@ -113,14 +113,13 @@ public class ResponsePanel extends JPanel {
         String prettyOrNotResponse = response;
         if (prettyButton.isSelected()) {
             switch (mimePath) {
-                case "text/x-json":
-                case MediaType.APPLICATION_JSON:
+                case RestMediaType.JSON:
                     try (JsonReader jsonReader = Json.createReader(new StringReader(prettyOrNotResponse))) {
                         JsonObject jsonObject = jsonReader.readObject();
                         prettyOrNotResponse = Utils.jsonPrettyFormat(jsonObject);
                     }
                 break;
-                case MediaType.TEXT_XML:
+                case RestMediaType.XML:
                     prettyOrNotResponse = Utils.xmlPrettyFormat(prettyOrNotResponse);
                     break;
             }

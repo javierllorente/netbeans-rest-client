@@ -22,7 +22,7 @@ package com.javierllorente.netbeans.rest.client;
 public class UserAgent {
 
     public final static String NAME = "RestClient";
-    public final static String VERSION = "0.5.1";
+    public final static String VERSION = "0.5.2";
     public final static String FULL = NAME + "/" + VERSION 
             + " (" + System.getProperty("os.name") + " " 
             + System.getProperty("os.version") + "; " 

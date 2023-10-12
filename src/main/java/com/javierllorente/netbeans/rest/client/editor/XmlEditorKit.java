@@ -13,26 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.javierllorente.netbeans.rest.client;
+package com.javierllorente.netbeans.rest.client.editor;
 
-import com.javierllorente.netbeans.rest.client.ui.RestClientTopComponent;
-import java.net.URL;
-import org.openide.awt.HtmlBrowser;
-import org.openide.util.lookup.ServiceProvider;
+import javax.swing.text.EditorKit;
+import org.netbeans.api.editor.mimelookup.MimeRegistration;
+import org.netbeans.modules.editor.NbEditorKit;
 
 /**
  *
  * @author Javier Llorente <javier@opensuse.org>
  */
-@ServiceProvider(service = HtmlBrowser.URLDisplayer.class, position = 0)
-public class RestURLDisplayer extends HtmlBrowser.URLDisplayer {
+@MimeRegistration(mimeType = RestMediaType.XML, service = EditorKit.class)
+public class XmlEditorKit extends NbEditorKit {
 
     @Override
-    public void showURL(URL url) {
-        RestClientTopComponent component = new RestClientTopComponent();
-        component.open();
-        component.setUrl(url.toString());
-        component.requestActive();
+    public String getContentType() {
+        return RestMediaType.XML;
     }
     
 }
