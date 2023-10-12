@@ -241,6 +241,9 @@ public class RestClientTopComponent extends TopComponent {
     }
     
     private void sendRequest() {
+        if (urlPanel.getUrl().isBlank()) {
+            return;
+        }
         responsePanel.clear();
         setDisplayName(urlPanel.getRequestMethod() + " " + urlPanel.getDisplayUrl());
         setToolTipText(urlPanel.getUrl());
@@ -274,7 +277,7 @@ public class RestClientTopComponent extends TopComponent {
             client.setBodyType(bodyPanel.getBodyType());
 
             try {
-                String url = urlPanel.getUrl();
+                String url = urlPanel.getUrl();            
                 if (!url.startsWith("http")) {
                     url = "http://" + urlPanel.getUrl();
                 }
