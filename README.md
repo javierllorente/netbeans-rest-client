@@ -9,7 +9,7 @@ Features (WIP)
 - Displays response headers
 
 Instructions
-- Install the module
-- Go to Tools -> REST Client
+- Install the module (Tools -> Plugins -> Available Plugins)
+- Then go to Tools -> REST Client -> Enjoy?
 
 ![screenshot](screenshot.png)
