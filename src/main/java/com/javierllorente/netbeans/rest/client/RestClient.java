@@ -42,6 +42,7 @@ import java.util.prefs.Preferences;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+import org.glassfish.jersey.CommonProperties;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
@@ -89,6 +90,7 @@ public class RestClient {
                 .connectorProvider(new ApacheConnectorProvider())
                 .property(ClientProperties.CONNECT_TIMEOUT, 20000)
                 .property(ClientProperties.FOLLOW_REDIRECTS, true)
+                .property(CommonProperties.FEATURE_AUTO_DISCOVERY_DISABLE, true)
                 .property(JsonGenerator.PRETTY_PRINTING, true)
                 .register(new LoggingFeature(logger, Level.INFO, LoggingFeature.Verbosity.HEADERS_ONLY, 8192));
         client = verifySslCertificates
