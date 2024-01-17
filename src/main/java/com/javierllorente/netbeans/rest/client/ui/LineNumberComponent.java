@@ -1,3 +1,18 @@
+/*
+ * Copyright 2024 Christian Lenz <christian.lenz@gmx.net>.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.javierllorente.netbeans.rest.client.ui;
 
 import java.awt.*;
@@ -5,8 +20,10 @@ import java.awt.geom.Rectangle2D;
 import javax.swing.*;
 import javax.swing.text.*;
 
-// HINT: Zoom not resizing linenumbers
-// HINT: Fixed linenumbers width
+/**
+ *
+ * @author Christian Lenz <christian.lenz@gmx.net>
+ */
 public class LineNumberComponent extends JComponent {
 
     private final JTextComponent textComponent;
@@ -24,13 +41,19 @@ public class LineNumberComponent extends JComponent {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        g.setColor(Color.GRAY);
+
+        Graphics2D g2d = (Graphics2D) g;
+
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
+
+        g2d.setColor(Color.GRAY);
 
         try {
             JViewport viewport = (JViewport) SwingUtilities.getAncestorOfClass(JViewport.class, textComponent);
             if (viewport != null) {
                 Point viewPosition = viewport.getViewPosition();
-                Rectangle clip = g.getClipBounds();
+                Rectangle clip = g2d.getClipBounds();
 
                 int startOffset = textComponent.viewToModel2D(new Point(0, clip.y + viewPosition.y));
                 int endOffset = textComponent.viewToModel2D(new Point(0, clip.y + clip.height + viewPosition.y));
@@ -41,7 +64,7 @@ public class LineNumberComponent extends JComponent {
                 int startLine = root.getElementIndex(startOffset);
                 int endLine = root.getElementIndex(endOffset);
 
-                FontMetrics fontMetrics = g.getFontMetrics();
+                FontMetrics fontMetrics = g2d.getFontMetrics();
                 int fontAscent = fontMetrics.getAscent();
 
                 for (int line = startLine; line <= endLine; line++) {
@@ -51,7 +74,7 @@ public class LineNumberComponent extends JComponent {
                     if (r != null && r.getY() - viewPosition.y + r.getHeight() > clip.y) {
                         String lineNumber = String.valueOf(line + 1);
                         int y = (int) Math.round(r.getY() - viewPosition.y + fontAscent);
-                        g.drawString(lineNumber, getWidth() - fontMetrics.stringWidth(lineNumber) - 5, y);
+                        g2d.drawString(lineNumber, getWidth() - fontMetrics.stringWidth(lineNumber) - 5, y);
                     }
                 }
             }
