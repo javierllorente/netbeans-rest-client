@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Javier Llorente <javier@opensuse.org>.
+ * Copyright 2022-2024 Javier Llorente <javier@opensuse.org>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,8 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.openide.util.Exceptions;
 
 /**
@@ -97,4 +99,8 @@ public class Utils {
         return xslSource;
     }
     
+    public static String htmlPrettyFormat(String input) {
+        Document doc = Jsoup.parse(input);   
+        return doc.toString();
+    }
 }

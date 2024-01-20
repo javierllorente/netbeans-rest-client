@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Javier Llorente <javier@opensuse.org>.
+ * Copyright 2022-2024 Javier Llorente <javier@opensuse.org>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -131,6 +131,9 @@ public class ResponsePanel extends JPanel {
                     break;
                 case RestMediaType.XML:
                     prettyOrNotResponse = Utils.xmlPrettyFormat(prettyOrNotResponse);
+                    break;
+                case MediaType.TEXT_HTML:
+                    prettyOrNotResponse = Utils.htmlPrettyFormat(prettyOrNotResponse);
                     break;
             }
         }
