@@ -21,7 +21,7 @@ package com.javierllorente.netbeans.rest.client.editor;
  */
 public class RestMediaType {
     public static final String XML = "text/nbrc-content+xml";
-    public static final String JSON = "text/nbrc-content+json";
+    public static final String JSON = "text/nbrc-content+x-json";
 
     private RestMediaType() {
     }   
