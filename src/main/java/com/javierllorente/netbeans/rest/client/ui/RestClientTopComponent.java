@@ -231,6 +231,10 @@ public class RestClientTopComponent extends TopComponent {
 
     }
 
+    public String getUrl() {
+        return urlPanel.getUrl();
+    }
+    
     public void setUrl(String url) {
         paramsPanel.removeTableModelListener(tableParamsListener);
         urlPanel.setUrl(url);
@@ -238,6 +242,18 @@ public class RestClientTopComponent extends TopComponent {
         setDisplayName(urlPanel.getRequestMethod() + " " + urlPanel.getDisplayUrl());
         setToolTipText(urlPanel.getUrl());
         urlPanel.requestUrlFocus();
+    }
+    
+    public String getDisplayUrl() {
+        return urlPanel.getDisplayUrl();
+    }
+    
+    public String getRequestMethod() {
+        return urlPanel.getRequestMethod();
+    }
+    
+    public void setRequestMethod(String method) {
+        urlPanel.setRequestMethod(method);
     }
     
     private void sendRequest() {
