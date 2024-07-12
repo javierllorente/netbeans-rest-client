@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Javier Llorente <javier@opensuse.org>.
+ * Copyright 2022-2024 Javier Llorente <javier@opensuse.org>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -230,7 +230,7 @@ public class RestClientTopComponent extends TopComponent {
         headersPanel.setValuesString(headers);
 
     }
-
+    
     public String getUrl() {
         return urlPanel.getUrl();
     }
@@ -254,6 +254,22 @@ public class RestClientTopComponent extends TopComponent {
     
     public void setRequestMethod(String method) {
         urlPanel.setRequestMethod(method);
+    }
+    
+    public MultivaluedMap<String, String> getHeaders() {
+        return headersPanel.getValues();
+    }
+    
+    public void setHeaders(MultivaluedMap<String, String> headers) {
+        headersPanel.setValues(headers);
+    }
+    
+    public void addHeader(String key, String value) {
+        headersPanel.addRow(key, value);
+    }
+    
+    public void clearHeaders() {
+        headersPanel.clearValues();
     }
     
     private void sendRequest() {
