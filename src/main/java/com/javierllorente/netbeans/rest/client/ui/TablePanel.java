@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Javier Llorente <javier@opensuse.org>.
+ * Copyright 2022-2024 Javier Llorente <javier@opensuse.org>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JTextField;
@@ -104,6 +105,10 @@ public class TablePanel extends javax.swing.JPanel {
         return (String) table.getModel().getValueAt(row, VALUE_COLUMN);
     }
     
+    public void setValue(String value, int row) {
+        table.getModel().setValueAt(value, row, VALUE_COLUMN);
+    }
+    
     public MultivaluedMap<String, String> getValues() {
         MultivaluedMap<String, String> values = new MultivaluedHashMap<>();
         for (int i = 0; i < table.getRowCount(); i++) {
@@ -112,6 +117,21 @@ public class TablePanel extends javax.swing.JPanel {
             }
         }
         return values;
+    }
+    
+    public void setValues(MultivaluedMap<String, String> values) {
+        for (Map.Entry<String, List<String>> entry : values.entrySet()) {
+            String value = "";
+            if (!entry.getValue().isEmpty()) {
+                value = entry.getValue().get(0);
+            }
+            addRow(entry.getKey(), value);
+        }
+    }
+    
+    public void clearValues() {
+        DefaultTableModel model = (DefaultTableModel) table.getModel();
+        model.setRowCount(0);
     }
     
     public String getValuesString() {
