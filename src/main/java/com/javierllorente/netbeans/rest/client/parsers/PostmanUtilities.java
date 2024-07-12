@@ -23,10 +23,14 @@ import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonReader;
 import jakarta.json.JsonValue;
+import jakarta.ws.rs.core.MultivaluedHashMap;
+import jakarta.ws.rs.core.MultivaluedMap;
 import java.io.IOException;
 import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
 import javax.swing.SwingUtilities;
 import org.openide.windows.TopComponent;
 
@@ -54,12 +58,24 @@ public class PostmanUtilities {
                 for (JsonValue jsonValue : itemArray) {
                     JsonObject itemObject = jsonValue.asJsonObject();
                     JsonObject requestObject = itemObject.getJsonObject("request");
+                    JsonArray headerArray = requestObject.getJsonArray("header");
+                    MultivaluedMap<String, String> headers = new MultivaluedHashMap<>();
+                    
+                    if (headerArray != null && !headerArray.isEmpty()) {
+                        for (int i = 0; i < headerArray.size(); i++) {
+                            JsonObject header = headerArray.getJsonObject(i);
+                            headers.add(header.getString("key"), header.getString("value"));
+                        }
+                    }
 
                     SwingUtilities.invokeLater(() -> {
                         RestClientTopComponent component = new RestClientTopComponent();
                         component.open();
                         component.setUrl(requestObject.getString("url"));
                         component.setRequestMethod(requestObject.getString("method"));
+                        // Remove User-Agent (automatically added on start-up)
+                        component.clearHeaders();
+                        component.setHeaders(headers);
                         component.requestActive();
                     });
                     
@@ -78,12 +94,22 @@ public class PostmanUtilities {
         for (var topComponent : TopComponent.getRegistry().getOpened()) {
             if (topComponent instanceof RestClientTopComponent) {
                 RestClientTopComponent restClientTopComponent = (RestClientTopComponent) topComponent;
+                
+                JsonArrayBuilder headers = Json.createArrayBuilder();                
+                for (Map.Entry<String, List<String>> entry : restClientTopComponent
+                        .getHeaders().entrySet()) {                 
+                    headers.add(Json.createObjectBuilder()
+                            .add("key", entry.getKey())
+                            .add("value", entry.getValue().get(0))
+                            .build());
+                }
 
                 JsonObject item = Json.createObjectBuilder()
                         .add("name", restClientTopComponent.getDisplayUrl())
                         .add("request", Json.createObjectBuilder()
                                 .add("method", restClientTopComponent.getRequestMethod())
                                 .add("url", restClientTopComponent.getUrl())
+                                .add("header", headers.build())
                                 .build())
                         .build();
                 items.add(item);
