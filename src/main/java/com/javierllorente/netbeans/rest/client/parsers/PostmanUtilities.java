@@ -50,36 +50,38 @@ public class PostmanUtilities {
         String json = Files.readString(path);
 
         try (JsonReader reader = Json.createReader(new StringReader(json))) {
-            
+
             JsonObject collection = reader.readObject();
             JsonArray itemArray = collection.getJsonArray("item");
-            
+
             if (itemArray != null) {
                 for (JsonValue jsonValue : itemArray) {
                     JsonObject itemObject = jsonValue.asJsonObject();
                     JsonObject requestObject = itemObject.getJsonObject("request");
-                    JsonArray headerArray = requestObject.getJsonArray("header");
-                    MultivaluedMap<String, String> headers = new MultivaluedHashMap<>();
-                    
-                    if (headerArray != null && !headerArray.isEmpty()) {
-                        for (int i = 0; i < headerArray.size(); i++) {
-                            JsonObject header = headerArray.getJsonObject(i);
-                            headers.add(header.getString("key"), header.getString("value"));
-                        }
-                    }
+                    if (requestObject != null) {
+                        JsonArray headerArray = requestObject.getJsonArray("header");
+                        MultivaluedMap<String, String> headers = new MultivaluedHashMap<>();
 
-                    SwingUtilities.invokeLater(() -> {
-                        RestClientTopComponent component = new RestClientTopComponent();
-                        component.open();
-                        component.setUrl(requestObject.getString("url"));
-                        component.setRequestMethod(requestObject.getString("method"));
-                        // Remove User-Agent (automatically added on start-up)
-                        component.clearHeaders();
-                        component.setHeaders(headers);
-                        component.requestActive();
-                    });
-                    
-                    ++imported;
+                        if (headerArray != null && !headerArray.isEmpty()) {
+                            for (int i = 0; i < headerArray.size(); i++) {
+                                JsonObject header = headerArray.getJsonObject(i);
+                                headers.add(header.getString("key"), header.getString("value"));
+                            }
+                        }
+
+                        SwingUtilities.invokeLater(() -> {
+                            RestClientTopComponent component = new RestClientTopComponent();
+                            component.open();
+                            component.setUrl(requestObject.getString("url"));
+                            component.setRequestMethod(requestObject.getString("method"));
+                            // Remove User-Agent (automatically added on start-up)
+                            component.clearHeaders();
+                            component.setHeaders(headers);
+                            component.requestActive();
+                        });
+
+                        ++imported;
+                    }
                 }
             }
         }
