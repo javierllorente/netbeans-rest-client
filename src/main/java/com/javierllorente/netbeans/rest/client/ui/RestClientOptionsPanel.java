@@ -16,8 +16,8 @@
 package com.javierllorente.netbeans.rest.client.ui;
 
 import com.javierllorente.netbeans.rest.client.parsers.PostmanUtilities;
+import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -130,24 +130,12 @@ public final class RestClientOptionsPanel extends javax.swing.JPanel {
         if (result == JFileChooser.APPROVE_OPTION) {
             int exported = 0;
             Path path = fileChooser.getSelectedFile().toPath();
-            
-            if (Files.exists(path)) {
-                String message = "Are you sure you want to overwrite " 
-                        + path.getFileName() + "?";
-                String title = "File already exists";
-                NotifyDescriptor nd = new NotifyDescriptor
-                        .Confirmation(message, title, NotifyDescriptor.YES_NO_OPTION);
-
-                if (DialogDisplayer.getDefault().notify(nd)
-                        == NotifyDescriptor.YES_OPTION) {
-                    try {
-                        exported = PostmanUtilities.exportRequests(path);
-                    } catch (IOException ex) {
-                        Exceptions.printStackTrace(ex);
-                        showError(ex.getMessage());
-                    }
-                }
-            }
+            try {
+                exported = PostmanUtilities.exportRequests(path);
+            } catch (IOException ex) {
+                Exceptions.printStackTrace(ex);
+                showError(ex.getMessage());
+            }            
             String message;
             if (exported == 0) {
                 message = "No items exported";
@@ -161,7 +149,24 @@ public final class RestClientOptionsPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_exportPostmanButtonActionPerformed
     
     private JFileChooser createJsonChooser(String dialogTitle) {
-        JFileChooser fileChooser = new JFileChooser();
+        JFileChooser fileChooser = new JFileChooser() {
+            @Override
+            public void approveSelection() {
+                File file = getSelectedFile();
+                if (file.exists() && getDialogType() == SAVE_DIALOG) {
+                    String message = "Are you sure you want to overwrite "
+                            + file.getName() + "?";
+                    String title = "File already exists";
+                    NotifyDescriptor nd = new NotifyDescriptor.Confirmation(message, title,
+                            NotifyDescriptor.YES_NO_OPTION);
+                    Object result = DialogDisplayer.getDefault().notify(nd);
+                    if (result != NotifyDescriptor.YES_OPTION) {
+                        return;
+                    }
+                }
+                super.approveSelection();
+            }
+        };
         fileChooser.setDialogTitle(dialogTitle);
         fileChooser.setAcceptAllFileFilterUsed(false);
         String description = "Postman Collection (*.json)";
