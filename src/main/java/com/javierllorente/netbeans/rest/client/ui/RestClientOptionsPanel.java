@@ -107,12 +107,9 @@ public final class RestClientOptionsPanel extends javax.swing.JPanel {
             try {
                 Path path = fileChooser.getSelectedFile().toPath();
                 int imported = PostmanUtilities.importRequests(path);
-                String message;
-                if (imported == 0) {
-                    message = "No items imported";
-                } else {
-                    message = imported + " item(s) successfully imported";
-                }
+                String message = (imported == 0)
+                        ? "No items imported"
+                        : imported + " item(s) successfully imported";
                 NotifyDescriptor nd = new NotifyDescriptor
                         .Message(message, NotifyDescriptor.INFORMATION_MESSAGE);
                 DialogDisplayer.getDefault().notify(nd);
@@ -136,12 +133,9 @@ public final class RestClientOptionsPanel extends javax.swing.JPanel {
                 Exceptions.printStackTrace(ex);
                 showError(ex.getMessage());
             }            
-            String message;
-            if (exported == 0) {
-                message = "No items exported";
-            } else {
-                message = exported + " item(s) successfully exported";
-            }
+            String message = (exported == 0)
+                    ? "No items exported"
+                    : exported + " item(s) successfully exported";
             NotifyDescriptor nd = new NotifyDescriptor.Message(message,
                     NotifyDescriptor.INFORMATION_MESSAGE);
             DialogDisplayer.getDefault().notify(nd);
