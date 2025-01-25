@@ -72,7 +72,20 @@ public class PostmanUtilities {
                         SwingUtilities.invokeLater(() -> {
                             RestClientTopComponent component = new RestClientTopComponent();
                             component.open();
-                            component.setUrl(requestObject.getString("url"));
+                            String url = null;
+                            JsonValue urlValue = requestObject.get("url");
+                            switch (urlValue.getValueType()) {
+                                case STRING:
+                                    url = requestObject.getString("url");
+                                    break;
+                                case OBJECT:
+                                    JsonObject urlObject = requestObject.getJsonObject("url");
+                                    url = urlObject.getString("raw");
+                                    break;
+                                default:
+                                    throw new AssertionError(urlValue.getValueType().name());
+                            }
+                            component.setUrl(url);                        
                             component.setRequestMethod(requestObject.getString("method"));
                             // Remove User-Agent (automatically added on start-up)
                             component.clearHeaders();
