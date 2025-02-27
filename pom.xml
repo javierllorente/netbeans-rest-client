@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.javierllorente</groupId>
     <artifactId>netbeans-rest-client</artifactId>
-    <version>0.6.2</version>
+    <version>0.6.3</version>
     <name>REST Client</name>
     <description>A REST client for NetBeans</description>
     <packaging>nbm</packaging>
