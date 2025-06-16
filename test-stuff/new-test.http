@@ -1,0 +1,20 @@
+GET /
+Accept: application/json
+Authorization: tt
+
+{}
+
+
+###
+/
+Accept: r
+
+###
+GET /
+
+
+###
+###
+GET http://google.de
+Accept: */*
+Content-Type: application/json

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE fontscolors PUBLIC "-//NetBeans//DTD Editor Fonts and Colors settings 1.1//EN" "http://www.netbeans.org/dtds/EditorFontsColors-1_1.dtd">
+<fontscolors>
+  <fontcolor name="keyword" default="keyword"/>
+  <fontcolor name="number" foreColor="red" default="number"/>
+  <fontcolor name="comment" default="comment"/>
+  <fontcolor name="string" default="string"/>
+  <fontcolor name="whitespace" default="whitespace"/>
+
+  <fontcolor name="method" foreColor="orange" default="method"/>
+  <fontcolor name="request_separator" foreColor="green" default="request_separator"/>
+
+  <fontcolor name="mod-method" default="method" />
+  <fontcolor name="mod-custom1" default="url" />
+</fontscolors>

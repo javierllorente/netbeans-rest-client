@@ -1,0 +1,108 @@
+GET test.de
+###
+das
+ll: test
+###
+
+### (ohne HTTP-Version)
+GET /
+
+### Test
+
+# HTTP/1.0 Beispiele (mit expliziter Version)
+GET / HTTP/1.0
+
+###
+GET /page.html HTTP/1.0
+
+# HTTP/1.1 – origin-form (nur Pfad und Query)
+###
+GET / HTTP/1.1
+GET /index.html HTTP/1.1
+GET /folder/ HTTP/1.1
+GET http://google.de/search?q=test HTTP/1.1
+GET google.de?q=test HTTP/1.1
+GET google.de?q1=test HTTP/1.1
+GET google.de/?q=test HTTP/1.1
+GET /search?qquery=test HTTP/1.1
+GET /search/?q=test HTTP/1.1
+DELETE wiki.de/? HTTP/1.1
+DELETE wiki.de? HTTP/1.1
+
+### Seperator
+
+# HTTP/1.1 – absolute-form (für Proxy-Anfragen)
+GET http://examplemple.com HTTP/1.1
+GET https://example.com/path?query=string HTTP/1.1
+
+# Verschiedene HTTP-Methoden
+PUT /api/resource HTTP/1.1
+POST /submit HTTP/1.1
+DELETE /api/resource/123 HTTP/1.1
+OPTIONS / HTTP/1.1
+HEAD / HTTP/1.1
+TRACE /debug HTTP/1.1
+
+# Asterisk-Form (zum Beispiel bei OPTIONS)
+OPTIONS * HTTP/1.1
+
+# WebSocket-Anfragen (WS/WSS)
+GET ws://echo.websocket.org/ HTTP/1.1
+GET wss://echo.websocket.org/ HTTP/1.1
+
+
+# Komplexere Beispiele mit Query-Parametern und URL-Encoding
+GET /search?q=test%20query&lang=de HTTP/1.1
+PUT /update?item=42&status=active HTTP/1.1
+GET /api/dat?param=value1&param2=value2 HTTP/1.1
+GET /search?query=%3Cscript%3E HTTP/1.1
+
+
+GET google.de HTTP/1.1
+GET google.de HTTP /2
+GET http://google.de HTTP/ 3
+GET www.x.com HTTP1
+GET google.de HTTP
+POST twitter.de HTTP/2d
+DELETE wiki.de/ HTTP/1.1
+DELETE wiki.de/123 HTTP/1.1
+DELETE http://wiki.de/ HTTP/1.1
+DELETE http://www.wiki.de/ HTTP/1.1
+GET /api/ HTTP/1.1
+GET / HTTP/1.1
+GET google.de/index.html HTTP/1.1
+GET /api/test HTTP/1.1
+GET /api/test/ HTTP/1.1
+GET /api/test/estset HTTP/1.1
+GET /api HTTP/1.1
+GET /1 HTTP/1.1
+GET /v1 HTTP/1.1
+
+GET wiki.de:443 HTTP/1.1
+GET http://example.com:8080 HTTP/1.1
+GET https://example.com:8080 HTTP/1.1
+GET http://example.com:8080/test HTTP/1.1
+
+GET http://192.168.1.1
+GET 192.168.1.1:443 HTTP/2.1
+GET 192.168.1.1 HTTP/1.1
+GET 192.168.1.1/ HTTP/1.1
+GET 0.0.0.0 HTTP/2
+GET 127.0.0.1 HTTP/2
+CONNECT example.com:443
+
+GET http://[2001:db8::1]/ HTTP/1.1
+GET http://[2001:db8::2]:8080/ HTTP/1.1
+GET http://[2001:db8::3]/search?q=test HTTP/1.1
+GET http://[2001:0db8:85a3::8a2e:0370:7334]/index.html HTTP/1.1
+GET http://[::1]/ HTTP/1.1
+GET http://[fe80::1ff:fe23:4567:890a]/docs HTTP/1.1
+GET http://[2001:db8:1234:5678:9abc:def0:1234:5678]:8443/settings HTTP/1.1
+GET http://[2001:db8::1]/ HTTP/1.1
+GET http://[2001:db8::1:3]:443 HTTP/1.1
+GET http://[2001:db8::1:3]:443 HTTP/1.1
+GET [2001:db8::1] HTTP/1.1
+GET [2001:db8::1]:443 HTTP/1.1
+GET [::1] HTTP/1.1
+GET [::] HTTP/1.1
+GET [::1]:80 HTTP/1.1

@@ -1,4 +1,5 @@
 Manifest-Version: 1.0
+OpenIDE-Module-Layer: com/javierllorente/netbeans/rest/client/layer.xml
 OpenIDE-Module-Localizing-Bundle: com/javierllorente/netbeans/rest/client/Bundle.properties
 OpenIDE-Module-Requires: org.openide.windows.WindowManager
 OpenIDE-Module-Recommends: cnb.org.netbeans.modules.javascript2.editor
