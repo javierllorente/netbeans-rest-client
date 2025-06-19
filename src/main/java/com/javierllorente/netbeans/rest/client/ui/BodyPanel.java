@@ -16,6 +16,8 @@
 package com.javierllorente.netbeans.rest.client.ui;
 
 import java.awt.CardLayout;
+import java.awt.event.ActionListener;
+import javax.swing.event.DocumentListener;
 import javax.swing.text.StyledEditorKit;
 
 /**
@@ -31,6 +33,15 @@ public class BodyPanel extends javax.swing.JPanel {
         initComponents();
     }
     
+    // Aggiungere questi metodi
+    public void addDocumentListener(DocumentListener dl) {
+        editorPane.getDocument().addDocumentListener(dl);
+    }
+    
+    public void addBodyTypeChangeListener(ActionListener listener) {
+        bodyComboBox.addActionListener(listener);
+    }
+    
     public String getBodyType() {
         return bodyComboBox.getSelectedItem().toString();
     }
@@ -41,6 +52,10 @@ public class BodyPanel extends javax.swing.JPanel {
     
     public String getBody() {
         return editorPane.getText();
+    }
+    
+    public void setBody(String body) {
+        editorPane.setText(body);
     }
     
     public void setComboBoxEnabled(boolean enable) {

@@ -56,6 +56,15 @@ public class AuthPanel extends javax.swing.JPanel {
         tokenTextField.setText(token);
     }
     
+    // Aggiungere questi metodi
+    public void addUsernameDocumentListener(DocumentListener dl) {
+        usernameTextField.getDocument().addDocumentListener(dl);
+    }
+
+    public void addPasswordDocumentListener(DocumentListener dl) {
+        passwordField.getDocument().addDocumentListener(dl);
+    }
+    
     public void addTokenDocumentListener(DocumentListener dl) {
         tokenTextField.getDocument().addDocumentListener(dl);
     }

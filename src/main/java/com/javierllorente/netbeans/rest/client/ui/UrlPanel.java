@@ -75,6 +75,10 @@ public class UrlPanel extends javax.swing.JPanel {
     public void setRequestMethod(String method) {
         methodComboBox.setSelectedItem(method);
     }
+    
+    public void addRequestMethodActionListener(ActionListener al) {
+        methodComboBox.addActionListener(al);
+    }
 
     public void addSendButtonActionListener(ActionListener al) {
         sendButton.addActionListener(al);
