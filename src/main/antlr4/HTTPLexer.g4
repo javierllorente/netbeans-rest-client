@@ -2,7 +2,6 @@ lexer grammar HTTPLexer;
 
 WS: [ \t];
 NEWLINE: ('\r'? '\n');
-// NEWLINE_WITH_INDENT: NEWLINE REQUIRED_WS;
 REQUEST_SEPARATOR : '###' (~[\r\n])*;
 COMMENT: ('#' | '//') (~[\r\n])*;
 
@@ -43,7 +42,6 @@ DIGITS: DIGIT+;
 
 SCHEME
     : 'http'
-    //    | 'HTTP' TODO: using also for scheme not only for http version -> Parser
     | 'https'
     | 'HTTPS'
     | 'ws'
@@ -102,17 +100,7 @@ DASH: '-';
 
 UNDERSCORE: '_';
 
-//IDENTIFIER_CHARACTER: ALPHA_CHARS DIGIT '_' '-';
-//
-//IDENTIFIER: IDENTIFIER_CHARACTER+;
-
-//INPUT_CHARACTER: '\u0000'..'\uFFFE';
-
-//INPUT_CHARACTER : ~[\r\n];
-
 SCHEME_SEPARATOR : '://';
-
-//REQUEST_SEPARATOR : '###' LINE_TAIL;
 
 INPUT_FILE_REF : '<' REQUIRED_WS LINE_TAIL;
 
@@ -130,5 +118,4 @@ MULTIPART_BOUNDARY : '--'  (~[\r\n])* '-' '--';
 MULTIPART_PART      : '--'  (~[\r\n])* '-';
 
 // Ignore everything else
-//ERROR : . -> skip;
 ERROR : .;

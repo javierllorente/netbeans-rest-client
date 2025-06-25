@@ -1,4 +1,6 @@
 /*
+ * Copyright 2025 Christian Lenz <christian.lenz@gmx.net>.
+ *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,10 +20,10 @@
  */
 package com.javierllorente.netbeans.rest.client.http.editor.syntax.coloring;
 
+import com.javierllorente.netbeans.rest.client.http.editor.navigator.HTTPLangStructureScanner;
 import com.javierllorente.netbeans.rest.client.http.editor.syntax.HTTPLangLexer;
 import com.javierllorente.netbeans.rest.client.http.editor.syntax.HTTPLangParser;
 import com.javierllorente.netbeans.rest.client.http.editor.syntax.HTTPLangParserResult;
-import com.javierllorente.netbeans.rest.client.http.editor.navigator.HTTPLangStructureScanner;
 import com.javierllorente.netbeans.rest.client.http.editor.syntax.coloring.semantic.HTTPSemanticAnalyzer;
 import java.util.Collection;
 import java.util.EnumSet;
@@ -45,7 +47,7 @@ import org.openide.windows.TopComponent;
 
 /**
  *
- * @author Christian Lenz
+ * @author Christian Lenz <christian.lenz@gmx.net>
  */
 @NbBundle.Messages(
     "HTTPResolver=HTTP File"

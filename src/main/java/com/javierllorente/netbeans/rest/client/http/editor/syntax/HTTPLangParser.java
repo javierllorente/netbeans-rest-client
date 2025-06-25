@@ -1,4 +1,6 @@
 /*
+ * Copyright 2025 Christian Lenz <christian.lenz@gmx.net>.
+ *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -25,6 +27,10 @@ import org.netbeans.modules.parsing.spi.ParseException;
 import org.netbeans.modules.parsing.spi.Parser;
 import org.netbeans.modules.parsing.spi.SourceModificationEvent;
 
+/**
+ *
+ * @author Christian Lenz <christian.lenz@gmx.net>
+ */
 /**
  * HTTPLangParser is the NetBeans Parser class that ties the snapshot to our
  * {@link HTTPLangParserResult}.

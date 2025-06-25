@@ -1,4 +1,6 @@
 /*
+ * Copyright 2025 Christian Lenz <christian.lenz@gmx.net>.
+ *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -26,7 +28,7 @@ import org.netbeans.spi.lexer.antlr4.AbstractAntlrLexerBridge;
 
 /**
  *
- * @author christiann lenz
+ * @author Christian Lenz <christian.lenz@gmx.net>
  */
 public final class HTTPLangLexer extends AbstractAntlrLexerBridge<HTTPLexer, HTTPTokenId> {
 

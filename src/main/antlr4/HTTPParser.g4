@@ -4,9 +4,6 @@ options {
 	tokenVocab = HTTPLexer;
 }
 
-// httpRequestsFile : (blank | COMMENT)* separatorLine? (blank | COMMENT)* request (blank |
-// COMMENT)* requestBlockWithSeparator* (blank | COMMENT)* | EOF ;
-
 httpRequestsFile: (blank | COMMENT)* firstRequest requestBlockWithSeparator* EOF;
 
 firstRequest:
@@ -14,10 +11,6 @@ firstRequest:
 
 requestBlockWithSeparator:
     separatorLine (blank | COMMENT)* request (blank | COMMENT)*;
-
-// requestBlockWithSeparator: separatorLine (blank | COMMENT)* request (blank | COMMENT)*; | request
-// { notifyErrorListeners("Missing separator"); _errHandler.recover(this, new
-// InputMismatchException(this)); };
 
 request:
     requestLine requestHeaders? ((NEWLINE NEWLINE requestBody)?
