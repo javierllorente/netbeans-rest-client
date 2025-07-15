@@ -58,6 +58,7 @@ import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
 import org.openide.cookies.SaveCookie;
+import org.openide.filesystems.FileAlreadyLockedException;
 import org.openide.filesystems.FileLock;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -295,7 +296,37 @@ public class RestClientTopComponent extends TopComponent implements SaveCookie {
         }
         return true;
     }
+ 
+    /*
+    @Override
+    public boolean canClose() {
+        if (modified) {
+            NotifyDescriptor.Confirmation nd = new NotifyDescriptor.Confirmation(
+                    "File modificato. Salvare le modifiche?",
+                    "Conferma Salvataggio",
+                    NotifyDescriptor.YES_NO_OPTION);
 
+            Object res = DialogDisplayer.getDefault().notify(nd);
+            if (res == NotifyDescriptor.YES_OPTION) {
+                try {
+                    save();
+                    return true;
+                } catch (IOException ex) {
+                    if (ex instanceof FileAlreadyLockedException) {
+                        NotifyDescriptor.Message msg = new NotifyDescriptor.Message(
+                            "Il file è già bloccato. Chiudi altre istanze e riprova.",
+                            NotifyDescriptor.ERROR_MESSAGE);
+                        DialogDisplayer.getDefault().notify(msg);
+                    } else {
+                        Exceptions.printStackTrace(ex);
+                    }
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+*/
     @Override
     public void componentClosed() {
         // TODO add custom code on component closing
@@ -321,7 +352,29 @@ public class RestClientTopComponent extends TopComponent implements SaveCookie {
             }
         }
     }
-
+    /*
+    public void saveToFile() throws IOException {
+        if (currentFile != null) {
+            FileLock lock = null;
+            try {
+                lock = currentFile.lock();
+                try (OutputStream out = currentFile.getOutputStream()) {
+                    Properties props = new Properties();
+                    writeProperties(props);
+                    props.store(out, "Rest Client Configuration");
+                    markAsUnmodified();
+                    setDisplayName(currentFile.getNameExt());
+                } catch (Exception e) {
+                    
+                }
+            } finally {
+                if (lock != null) {
+                    lock.releaseLock();
+                }
+            }
+        }
+    }
+    */
     public void readFile() {
         if (currentFile != null) {
             try (InputStream inp = currentFile.getInputStream()) {

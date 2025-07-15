@@ -65,10 +65,11 @@ public class NewRestclientFileAction extends AbstractAction {
         String fileName = BASE_NAME + "." + EXT;
         try {
             FileObject newFile = dir.createData(fileName);
-
+/*
             RestClientTopComponent tc = new RestClientTopComponent(newFile);
             tc.open();
             tc.requestActive();
+*/
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
         }

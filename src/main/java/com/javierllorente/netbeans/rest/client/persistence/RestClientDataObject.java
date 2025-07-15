@@ -1,15 +1,43 @@
 package com.javierllorente.netbeans.rest.client.persistence;
 
+import com.javierllorente.netbeans.rest.client.ui.RestClientTopComponent;
+import java.beans.PropertyChangeEvent;
 import java.io.IOException;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.EventListener;
+import java.util.List;
+import java.util.Properties;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.event.UndoableEditListener;
+import javax.swing.text.BadLocationException;
+import javax.swing.undo.CannotRedoException;
+import javax.swing.undo.CannotUndoException;
+import javax.swing.undo.UndoableEdit;
+import org.netbeans.core.spi.multiview.MultiViewElement;
+import org.netbeans.core.spi.multiview.text.MultiViewEditorElement;
+import org.netbeans.lib.editor.util.PriorityListenerList;
+import org.netbeans.modules.editor.NbEditorDocument;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
+import org.openide.awt.UndoRedo;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.MIMEResolver;
+import org.openide.loaders.DataObject;
 import org.openide.loaders.DataObjectExistsException;
 import org.openide.loaders.MultiDataObject;
 import org.openide.loaders.MultiFileLoader;
+import org.openide.text.DataEditorSupport;
+import org.openide.util.Exceptions;
+import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
+import org.openide.windows.TopComponent;
 
+@NbBundle.Messages({
+    "LB_REST_FILE_LOADER=Files of RestClient"
+})
 // 2. DataObject e Registrazione MIME
 // -----------------------------------
 
@@ -69,11 +97,95 @@ import org.openide.loaders.MultiFileLoader;
             position = 1400)
 })
 public class RestClientDataObject extends MultiDataObject {
+    
+    @MultiViewElement.Registration(
+            displayName = "#LB_REST_FILE_EDITOR",
+            iconBase = "com/javierllorente/netbeans/rest/client/restservice.png",
+            mimeType = "application/x-restclient",
+            persistenceType = TopComponent.PERSISTENCE_ONLY_OPENED,
+            preferredID = "RSTCLI",
+            position = 2000)
+    @NbBundle.Messages("LB_REST_FILE_EDITOR=Source")
+    public static MultiViewEditorElement createEditor(Lookup lkp) {
+        return new MultiViewEditorElement(lkp);
+    }
+    
+    
+    private final UndoRedo.Manager undoRedoManager;
+    private final DocumentListener documentListener;
+    private RestClientTopComponent restClientTopComponent;
 
     public RestClientDataObject(FileObject pf, MultiFileLoader loader) throws DataObjectExistsException, IOException {
         super(pf, loader);
+        undoRedoManager = new UndoRedo.Manager() {
+            @Override
+            public void undo() throws CannotUndoException {
+                super.undo();
+                updateView();
+            }
+
+            @Override
+            protected void undoTo(UndoableEdit edit) throws CannotUndoException {
+                super.undoTo(edit);
+                updateView();
+            }
+
+            @Override
+            public void redo() throws CannotRedoException {
+                super.redo();
+                updateView();
+            }
+
+            @Override
+            protected void redoTo(UndoableEdit edit) throws CannotRedoException {
+                super.redoTo(edit);
+                updateView();
+            }
+
+            @Override
+            public void undoOrRedo() throws CannotRedoException, CannotUndoException {
+                super.undoOrRedo();
+                updateView();
+            }
+
+            private void updateView() {
+                if (restClientTopComponent != null && restClientTopComponent.isVisible()) {
+                    //restClientTopComponent.updateTable();
+                }
+            }
+        };
+        documentListener = new DocumentListener() {
+
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                updateView();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                updateView();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                updateView();
+            }
+
+            private void updateView() {
+                if (restClientTopComponent != null && restClientTopComponent.isVisible()) {
+                    //restClientTopComponent.updateTable();
+                }
+            }
+        };
         // Registra l'editor per apertura con doppio click
         registerEditor("application/x-restclient", true);
+
+        this.addPropertyChangeListener((PropertyChangeEvent evt) -> {
+            if (evt.getPropertyName().equals(DataObject.PROP_MODIFIED) && ((Boolean) evt.getNewValue())) {
+                initDocument();
+            }
+        });
+        
     }
     
     @Override
@@ -81,78 +193,109 @@ public class RestClientDataObject extends MultiDataObject {
         // Permette di associare il DataObject alla Lookup per SaveCookie, ecc.
         return 1;
     }
-    
-    
-/*
-    @Override
-    protected Node createNodeDelegate() {
-        Node original = super.createNodeDelegate();
-        // Avvolge il nodo originale per aggiungere la nostra azione
-        for(Action a : original.getActions(true))
-            log.info("[RestClientDataObject] OrAction:" + a.toString());
-        // Avvolge il nodo originale per aggiungere la nostra azione extra
-        return new FilterNode(original) {
-            @Override
-            public Action getPreferredAction() {
-                // Doppio clic apre il nostro editor custom
-                return new OpenRestclientAction(getPrimaryFile());
-            }
 
-            @Override
-            public Action[] getActions(boolean context) {
-                // Raccogli azioni standard escludendo eventuali voci del nostro custom già registrate
-                List<Action> list = new ArrayList<>();
-                for (Action a : super.getActions(context)) {
-                    Object name = a.getValue(Action.NAME);
-                    if ("Apri REST Client".equals(name)) {
-                        continue; // escludi azioni duplicate
-                    }
-                    list.add(a);
+    public void setRestClientTopComponent(RestClientTopComponent restClientTopComponent) {
+        this.restClientTopComponent = restClientTopComponent;
+    }
+    
+    
+    /**
+     * Init document listeners
+     */
+    public void initDocument() {
+        Lookup lookup = getCookieSet().getLookup();
+        DataEditorSupport dataEditorSupport = lookup.lookup(DataEditorSupport.class);
+        NbEditorDocument document = null;
+        if (dataEditorSupport.isDocumentLoaded()) {
+            document = (NbEditorDocument) dataEditorSupport.getDocument();
+        } else {
+            try {
+                document = (NbEditorDocument) dataEditorSupport.openDocument();
+            } catch (IOException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+        }
+        if (document != null)
+            initDocument(document);
+    }
+    
+    private void initDocument(NbEditorDocument document) {
+        UndoableEditListener[] undoableEditListeners = document.getUndoableEditListeners();
+        boolean found = false;
+        if (undoableEditListeners.length > 0) {
+            for (UndoableEditListener uel : undoableEditListeners) {
+                if (uel.equals(undoRedoManager)) {
+                    found = true;
+                    break;
                 }
-                // Aggiungi separatore e la nostra azione custom in coda
-                list.add(null);
-                list.add(new OpenRestclientAction(getPrimaryFile()));
-                return list.toArray(new Action[0]);
             }
-        };
-    }*/
-    
-    /*
-    @Override
-    protected Node createNodeDelegate() {
-        // Node con azioni standard più la nostra OpenRestclientAction come azione preferita
-        DataNode node = new DataNode(this, Children.LEAF, getLookup());
-        node.setDisplayName(getPrimaryFile().getNameExt());
-        node.setIconBaseWithExtension("com/javierllorente/netbeans/rest/client/restservice.png");
-        node.setShortDescription(getPrimaryFile().getPath());
-        node.setCookie(new OpenRestclientAction(getPrimaryFile()));
-        return new FilterNode(node) {
-            @Override
-            public Action getPreferredAction() {
-                return new OpenRestclientAction(getPrimaryFile());
-            }
+        }
+        if (!found) {
+            document.addUndoableEditListener(undoRedoManager);
+        }
 
-            @Override
-            public Action[] getActions(boolean context) {
-                // includi azioni standard
-                Action[] std = super.getActions(context);
-                List<Action> list = new ArrayList<>(Arrays.asList(std));
-                list.add(null); // separator
-                list.add(new OpenRestclientAction(getPrimaryFile()));
-                return list.toArray(new Action[0]);
+        DocumentListener[] documentListeners = document.getDocumentListeners();
+        found = false;
+        if (documentListeners.length > 0) {
+            loopDocumentListener:
+            for (DocumentListener dl : documentListeners) {
+                if (dl.equals(documentListener)) {
+                    found = true;
+                    break;
+                } else if (dl instanceof PriorityListenerList pll) {
+                    EventListener[][] listenersArray = pll.getListenersArray();
+                    for (EventListener[] row : listenersArray) {
+                        for (EventListener el : row) {
+                            if (el.equals(documentListener)) {
+                                found = true;
+                                break loopDocumentListener;
+                            }
+                        }
+                    }
+                }
             }
-        };
-    }*/
-/*
-    @Override
-    protected Node createNodeDelegate() {
-        System.out.println("[RestClientDataObject] Creazione nodo delegate per: " + getPrimaryFile().getPath());
-        return new AbstractNode(Children.LEAF, Lookups.singleton(this)) {
-            @Override
-            public Action[] getActions(boolean context) {
-                System.out.println("[RestClientDataObject] Azioni richieste per: " + getPrimaryFile().getPath());
-                return new Action[]{new OpenRestclientAction(getPrimaryFile())};
+        }
+        if (!found) {
+            document.addDocumentListener(documentListener);
+        }
+    }
+    
+    public void readFile() {
+        try {
+            Lookup lookup = getCookieSet().getLookup();
+            DataEditorSupport dataEditorSupport = lookup.lookup(DataEditorSupport.class);
+            NbEditorDocument document = null;
+            if (dataEditorSupport.isDocumentLoaded()) {
+                document = (NbEditorDocument) dataEditorSupport.getDocument();
+            } else {
+                try {
+                    document = (NbEditorDocument) dataEditorSupport.openDocument();
+                } catch (IOException ex) {
+                    Exceptions.printStackTrace(ex);
+                }
             }
-        };
-    }*/
+            if (document != null) {
+                initDocument(document);
+
+                int length = document.getLength();
+                if (length > 0) {
+                    try {
+                        String text = document.getText(0, length);
+                        StringReader sr = new StringReader(text);
+                        Properties props = new Properties();
+
+                        props.load(sr);
+                        
+                        
+                    } catch (IOException ex) {
+                        Exceptions.printStackTrace(ex);
+                    }
+                } else {
+                }
+            }
+        } catch (BadLocationException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        
+    }
 }
