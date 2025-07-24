@@ -187,17 +187,18 @@ public class RestClientDataObject extends MultiDataObject {
         });
         
     }
+
     
     @Override
     protected int associateLookup() {
         // Permette di associare il DataObject alla Lookup per SaveCookie, ecc.
-        return 1;
+        return super.associateLookup();
     }
 
     public void setRestClientTopComponent(RestClientTopComponent restClientTopComponent) {
         this.restClientTopComponent = restClientTopComponent;
+        getCookieSet().add(restClientTopComponent);
     }
-    
     
     /**
      * Init document listeners

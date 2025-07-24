@@ -34,8 +34,24 @@ public class OpenRestclientAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        TopComponent editor = new RestClientTopComponent(file);
-        editor.open();
+        // Verifica se esiste già un'istanza aperta
+        RestClientTopComponent editor = findExistingEditor(file);
+        if(editor == null) {
+            editor = new RestClientTopComponent(file);
+            editor.open();
+        }
         editor.requestActive();
+    }
+
+    private RestClientTopComponent findExistingEditor(FileObject file) {
+        for(TopComponent tc : TopComponent.getRegistry().getOpened()) {
+            if(tc instanceof RestClientTopComponent) {
+                RestClientTopComponent rctc = (RestClientTopComponent)tc;
+                if(file.equals(rctc.getFile())) {
+                    return rctc;
+                }
+            }
+        }
+        return null;
     }
 }

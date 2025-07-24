@@ -98,7 +98,7 @@ import org.openide.windows.TopComponent;
 public class RestClientTopComponent extends TopComponent implements SaveCookie {
 
     private static final Logger logger = Logger.getLogger(RestClientTopComponent.class.getName());
-
+    public static final String PROP_DIRTY = "dirty";
     public static final String VERSION_PROPERTY = "version";
     public static final String URL_PROPERTY = "url";
     public static final String REQUEST_METHOD_PROPERTY = "request_method";
@@ -126,7 +126,7 @@ public class RestClientTopComponent extends TopComponent implements SaveCookie {
 
     public RestClientTopComponent() {
         initComponents();
-
+        associateLookup(Lookups.fixed(this)); // Aggiungi questa linea
         setupModificationListeners();
 
         setName(Bundle.CTL_RestClientTopComponent());
@@ -238,13 +238,25 @@ public class RestClientTopComponent extends TopComponent implements SaveCookie {
         setModified(false);
         associateLookup(Lookups.fixed(this)); // Rimuove il SaveCookie
     }
-
+    
     private void markAsModified() {
-        setModified(true);
+        if (!modified) {
+            modified = true;
+            saveCookie = this; // SaveCookie viene aggiunto solo se non esiste già
+            if (getLookup().lookup(SaveCookie.class) == null) {
+                associateLookup(Lookups.fixed(this, saveCookie));
+            }
+            firePropertyChange(PROP_DIRTY, false, true);
+        }
     }
 
     private void markAsUnmodified() {
-        setModified(false);
+        if(modified) {
+            modified = false;
+            saveCookie = null;
+            //associateLookup(Lookups.fixed(this));
+            firePropertyChange(PROP_DIRTY, true, false);
+        }
     }
 
     @Override
@@ -269,32 +281,42 @@ public class RestClientTopComponent extends TopComponent implements SaveCookie {
 
     @Override
     public void save() throws IOException {
-        if (!modified) {
-            return;
-        }
-        saveToFile();
-    }
+        if (!modified) return;
 
+        try {
+            saveToFile();
+            markAsUnmodified(); // Aggiungi questo
+            setDisplayName(currentFile.getNameExt());
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+            throw ex;
+        }
+    }
+    
     @Override
     public boolean canClose() {
-        if (modified) {
-            NotifyDescriptor.Confirmation nd = new NotifyDescriptor.Confirmation(
-                    "File modificato. Salvare le modifiche?",
-                    "Conferma Salvataggio",
-                    NotifyDescriptor.YES_NO_OPTION);
-
-            Object res = DialogDisplayer.getDefault().notify(nd);
-            if (res == NotifyDescriptor.YES_OPTION) {
-                try {
-                    save();
-                    return true;
-                } catch (IOException ex) {
-                    Exceptions.printStackTrace(ex);
-                    return false;
-                }
-            }
+        if (!modified) {
+            return true;
         }
-        return true;
+
+        NotifyDescriptor.Confirmation nd = new NotifyDescriptor.Confirmation(
+            "File modificato. Salvare le modifiche?",
+            "Conferma Salvataggio",
+            NotifyDescriptor.YES_NO_CANCEL_OPTION);
+
+        Object res = DialogDisplayer.getDefault().notify(nd);
+        if (res == NotifyDescriptor.YES_OPTION) {
+            try {
+                save();
+                return true; // Chiudi dopo il salvataggio
+            } catch (IOException ex) {
+                Exceptions.printStackTrace(ex);
+                return false;
+            }
+        } else if (res == NotifyDescriptor.NO_OPTION) {
+            return true; // Chiudi senza salvare
+        }
+        return false; // Annulla chiusura
     }
  
     /*
@@ -340,18 +362,30 @@ public class RestClientTopComponent extends TopComponent implements SaveCookie {
         this.currentFile = file;
         setDisplayName("Editor per: " + file.getNameExt());
     }
-
+    
     public void saveToFile() throws IOException {
         if (currentFile != null) {
-            try (OutputStream out = currentFile.getOutputStream(); FileLock lock = currentFile.lock()) {
+            FileLock lock = null;
+            OutputStream out = null;
+            try {
+                lock = currentFile.lock();
+                out = currentFile.getOutputStream(lock);
                 Properties props = new Properties();
                 writeProperties(props);
                 props.store(out, "Rest Client Configuration");
                 markAsUnmodified();
                 setDisplayName(currentFile.getNameExt());
+            } finally {
+                if (out != null) {
+                    out.close();
+                }
+                if (lock != null) {
+                    lock.releaseLock();
+                }
             }
         }
     }
+
     /*
     public void saveToFile() throws IOException {
         if (currentFile != null) {
@@ -390,6 +424,18 @@ public class RestClientTopComponent extends TopComponent implements SaveCookie {
                 String message = "Configuration read successfully";
                 NotifyDescriptor nd = new NotifyDescriptor.Message(message, NotifyDescriptor.INFORMATION_MESSAGE);
                 DialogDisplayer.getDefault().notify(nd);*/
+            } catch (IOException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+        }
+    }
+    
+    @Override
+    protected void componentDeactivated() {
+        super.componentDeactivated();
+        if(modified) {
+            try {
+                save();
             } catch (IOException ex) {
                 Exceptions.printStackTrace(ex);
             }
@@ -543,17 +589,19 @@ public class RestClientTopComponent extends TopComponent implements SaveCookie {
             }
         });
     }
-
+    
     public void writeProperties(java.util.Properties p) {
-
+        // Aggiungi tutte le proprietà necessarie
         p.setProperty(VERSION_PROPERTY, "1.0");
-        p.setProperty(URL_PROPERTY, urlPanel.getUrl());
+        p.setProperty(URL_PROPERTY, urlPanel.getUrl() != null ? urlPanel.getUrl() : "");
         p.setProperty(REQUEST_METHOD_PROPERTY, urlPanel.getRequestMethod());
         p.setProperty(AUTH_TYPE_PROPERTY, authPanel.getAuthType());
         p.setProperty(USERNAME_PROPERTY, authPanel.getUsername());
         p.setProperty(HEADERS_PROPERTY, headersPanel.getValuesString());
         p.setProperty(BODY_TYPE_PROPERTY, bodyPanel.getBodyType());
-        p.setProperty(BODY_PROPERTY, bodyPanel.getBody());
+        p.setProperty(BODY_PROPERTY, bodyPanel.getBody() != null ? bodyPanel.getBody() : "");
+
+        // Aggiungi eventuali altre proprietà necessarie
     }
 
     public void readProperties(java.util.Properties p) {
