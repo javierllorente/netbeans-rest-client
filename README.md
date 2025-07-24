@@ -10,6 +10,7 @@ Features
 - Making JSON, XML or HTML response pretty/ugly
 - Opening links of a JSON/XML response in a new tab
 - Importing from/exporting to Postman collections
+- .http file editor
 
 Instructions
 - Install the module (Tools -> Plugins -> Available Plugins)
