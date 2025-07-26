@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>com.javierllorente</groupId>
-    <artifactId>netbeans-rest-client</artifactId>
-    <version>0.7.16-SNAPSHOT</version>
+    <groupId>com.lb</groupId>
+    <artifactId>netbeans-rest-client-2</artifactId>
+    <version>1.0.0</version>
     <name>REST Client</name>
     <description>A REST client for NetBeans</description>
     <packaging>nbm</packaging>
-    <url>https://github.com/javierllorente/netbeans-rest-client</url>
+    <url>https://github.com/luckebar/netbeans-rest-client-2</url>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     <developers>
         <developer>
-            <name>Javier Llorente</name>
-            <email>javier@opensuse.org</email>
+            <name>Luca Bartoli</name>
+            <email>lbdevweb@gmail.com</email>
         </developer>
     </developers>
     <licenses>
@@ -25,10 +25,10 @@
         </license>
     </licenses>
     <scm>
-        <connection>scm:git:https://github.com/javierllorente/netbeans-rest-client.git</connection>
-        <developerConnection>scm:git:https://github.com/javierllorente/netbeans-rest-client.git</developerConnection>
+        <connection>scm:git:https://github.com/luckebar/netbeans-rest-client-2.git</connection>
+        <developerConnection>scm:git:https://github.com/luckebar/netbeans-rest-client-2.git</developerConnection>
         <tag>HEAD</tag>
-        <url>https://github.com/javierllorente/netbeans-rest-client</url>
+        <url>https://github.com/luckebar/netbeans-rest-client-2</url>
     </scm>
     <distributionManagement>
         <snapshotRepository>
@@ -59,7 +59,7 @@
                 <version>14.2</version>
                 <extensions>true</extensions>
                 <configuration>
-                    <author>Javier Llorente</author>
+                    <author>Luca Bartoli</author>
                     <licenseFile>LICENSE</licenseFile>
                     <licenseName>Apache-2.0</licenseName>
                     <verifyRuntime>false</verifyRuntime>
@@ -287,6 +287,18 @@
             <artifactId>org-netbeans-core-multiview</artifactId>
             <version>RELEASE260</version>
             <type>jar</type>
+        </dependency>
+        
+        
+        <dependency>
+            <groupId>jakarta.json</groupId>
+            <artifactId>jakarta.json-api</artifactId>
+            <version>2.1.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.parsson</groupId>
+            <artifactId>jakarta.json</artifactId>
+            <version>1.1.7</version>
         </dependency>
     </dependencies>
 </project>

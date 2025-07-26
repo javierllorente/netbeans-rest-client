@@ -1,0 +1,968 @@
+/*
+ * Copyright 2022-2024 Javier Llorente <javier@opensuse.org>.
+ * Copyright 2025        Luca Bartoli <lbdevweb@gmail.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.lb.netbeans.rest.client.ui;
+
+import com.lb.netbeans.rest.client.ui.Bundle;
+import com.lb.netbeans.rest.client.event.CellDocumentListener;
+import com.lb.netbeans.rest.client.parsers.CellParamsParser;
+import com.lb.netbeans.rest.client.RestClient;
+import com.lb.netbeans.rest.client.event.TabChangeListener;
+import com.lb.netbeans.rest.client.event.TableParamsListener;
+import com.lb.netbeans.rest.client.event.TokenDocumentListener;
+import com.lb.netbeans.rest.client.event.UrlDocumentListener;
+import com.lb.netbeans.rest.client.UserAgent;
+import jakarta.ws.rs.HttpMethod;
+import jakarta.ws.rs.ProcessingException;
+import jakarta.ws.rs.core.MultivaluedHashMap;
+import jakarta.ws.rs.core.MultivaluedMap;
+import java.awt.Cursor;
+import java.awt.FileDialog;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.beans.PropertyChangeEvent;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import org.netbeans.api.progress.ProgressHandle;
+import org.netbeans.api.settings.ConvertAsProperties;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
+import org.openide.awt.ActionID;
+import org.openide.awt.ActionReference;
+import org.openide.awt.ActionRegistration;
+import org.openide.cookies.SaveCookie;
+import org.openide.filesystems.FileAlreadyLockedException;
+import org.openide.filesystems.FileLock;
+import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
+import org.openide.util.Exceptions;
+import org.openide.util.Lookup;
+import org.openide.util.NbBundle.Messages;
+import org.openide.util.RequestProcessor;
+import org.openide.util.lookup.Lookups;
+import org.openide.windows.TopComponent;
+import org.openide.windows.WindowManager;
+import org.openide.windows.TopComponent;
+
+/**
+ * Top component which displays something.
+ * @author Luca Bartoli <lbdevweb@gmail.com>
+ */
+@ConvertAsProperties(
+        dtd = "-//com.lb.netbeans.rest.client//RestClient//EN",
+        autostore = false
+)
+@TopComponent.Description(
+        preferredID = "RestClientTopComponent",
+        iconBase = "com/lb/netbeans/rest/client/restservice.png",
+        persistenceType = TopComponent.PERSISTENCE_ONLY_OPENED
+)
+@TopComponent.Registration(mode = "editor", openAtStartup = false)
+@ActionID(category = "Window", id = "com.lb.netbeans.rest.client.RestClientTopComponent")
+//@ActionReference(path = "Menu/Tools", position = 805)
+@TopComponent.OpenActionRegistration(
+        displayName = "#CTL_RestClientTopComponent" /*, 
+        preferredID = "RestClientTopComponent" */
+)
+@Messages({
+    "CTL_RestClientAction=REST Client",
+    "CTL_RestClientTopComponent=REST Client",
+    "HINT_RestClientTopComponent="
+})
+public class RestClientTopComponent extends TopComponent implements SaveCookie {
+
+    private static final Logger logger = Logger.getLogger(RestClientTopComponent.class.getName());
+    public static final String PROP_DIRTY = "dirty";
+    public static final String VERSION_PROPERTY = "version";
+    public static final String URL_PROPERTY = "url";
+    public static final String REQUEST_METHOD_PROPERTY = "request_method";
+    public static final String AUTH_TYPE_PROPERTY = "auth_type";
+    public static final String USERNAME_PROPERTY = "username";
+    public static final String PASSWORD_PROPERTY = "password";
+    public static final String PASSWORD_SAVE_PROPERTY = "password_save";
+    public static final String HEADERS_PROPERTY = "headers";
+
+    public static final String BODY_TYPE_PROPERTY = "body_type";
+    public static final String BODY_PROPERTY = "body";
+    public static final String PARAMS_PROPERTY = "params";
+    
+    public static final String TOKEN_CC_PROPERTY = "token_cc";
+    public static final String GRANT_TYPE_PROPERTY = "grant_type";
+    public static final String ACCESS_TOKEN_URL_PROPERTY = "access_token_url";
+    public static final String CLIENT_ID_PROPERTY = "client_id";
+    public static final String CLIENT_SECRET_PROPERTY = "client_secret";
+    public static final String SCOPE_PROPERTY = "scope";
+    public static final String AUTH_MODE_PROPERTY = "auth_mode";
+    
+    public static final String AUTH_URL_PROPERTY = "auth_url";
+    public static final String CALLBACK_URL_PROPERTY = "callback_url";
+    public static final String CODE_VERIFIER_PROPERTY = "code_verifier";
+    public static final String CODE_CHALLENGE_PROPERTY = "code_challenge";
+
+    private final RestClient client;
+    private final RequestProcessor processor;
+    private final TableParamsListener tableParamsListener;
+
+    private FileObject currentFile;
+    private boolean modified = false;
+    // Aggiungere questa variabile d'istanza
+    private SaveCookie saveCookie;
+
+    public RestClientTopComponent(FileObject currentFile) {
+        this();
+        setFile(currentFile);
+        readFile();
+    }
+
+    public RestClientTopComponent() {
+        initComponents();
+        
+        associateLookup(Lookups.fixed(this)); // Aggiungi questa linea
+        setupModificationListeners();
+
+        setName(Bundle.CTL_RestClientTopComponent());
+        setToolTipText(Bundle.HINT_RestClientTopComponent());
+
+        paramsPanel.hideEnableColumn();
+
+        UrlDocumentListener urlDocumentListener = new UrlDocumentListener(paramsPanel);
+
+        CellParamsParser cellParamsParser = new CellParamsParser(paramsPanel, urlPanel, urlDocumentListener);
+        DocumentListener cellDocumentListener = new CellDocumentListener(cellParamsParser);
+
+        tableParamsListener = new TableParamsListener(paramsPanel, urlPanel, urlDocumentListener);
+        paramsPanel.addTableModelListener(tableParamsListener);
+
+        urlPanel.addUrlDocumentListener(urlDocumentListener);
+        paramsPanel.addDocumentListener(cellDocumentListener);
+
+        urlPanel.addUrlFocusListener(new FocusListener() {
+            @Override
+            public void focusGained(FocusEvent fe) {
+                paramsPanel.removeTableModelListener(tableParamsListener);
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                paramsPanel.addTableModelListener(tableParamsListener);
+            }
+        });
+
+        urlPanel.addComboBoxActionListener((ae) -> {
+            boolean enableComboBox = !(urlPanel.getRequestMethod().equals(HttpMethod.GET)
+                    || urlPanel.getRequestMethod().equals(HttpMethod.DELETE));
+            if (!enableComboBox) {
+                bodyPanel.setBodyType("None");
+            }
+            bodyPanel.setComboBoxEnabled(enableComboBox);
+        });
+
+        urlPanel.addSendButtonActionListener((ae) -> {
+            sendRequest();
+        });
+
+        urlPanel.addUrlKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                super.keyPressed(e);
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    sendRequest();
+                }
+            }
+        });
+
+        paramsPanel.addPropertyChangeListener("tableCellEditor", (PropertyChangeEvent pce) -> {
+            logger.info("ParamsPanel editing " + pce.getNewValue() == null ? "stopped" : "started");
+        });
+
+        KeyListener escapeKeyListener = new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent ke) {
+                if (ke.getKeyCode() == KeyEvent.VK_ESCAPE) {
+                    String oldValue = (paramsPanel.getSelectedColumn() == 1
+                            ? paramsPanel.getKey(paramsPanel.getSelectedRow())
+                            : paramsPanel.getValue(paramsPanel.getSelectedRow()));
+                    cellParamsParser.processChanges(oldValue);
+                }
+            }
+        };
+        paramsPanel.addCellKeyListener(escapeKeyListener);
+        paramsPanel.addTableKeyListener(escapeKeyListener);
+
+        DocumentListener tokenDocumentListener = new TokenDocumentListener(headersPanel);
+        authPanel.addTokenDocumentListener(tokenDocumentListener);
+        authPanel.addComboBoxListener((ActionEvent ae) -> {
+            if (authPanel.getAuthType().equals("No Auth")) {
+                int index = headersPanel.containsKey("Authorization");
+                if (index != -1 && headersPanel.getValue(index).startsWith("Bearer")) {
+                    headersPanel.removeRow(index);
+                }
+            }
+        });
+        TabChangeListener tabChangeListener = new TabChangeListener(headersPanel, authPanel, tokenDocumentListener);
+        requestTabbedPane.addChangeListener(tabChangeListener);
+
+        headersPanel.addRow("User-Agent", UserAgent.FULL);
+
+        client = new RestClient();
+        authPanel.setRestClient(client);
+        processor = new RequestProcessor(RestClientTopComponent.class);
+    }
+
+    private void setModified(boolean modified) {
+        if (this.modified != modified) {
+            this.modified = modified;
+            if (modified) {
+                if (saveCookie == null) {
+                    saveCookie = (SaveCookie) () -> saveToFile();
+                }
+                associateLookup(Lookups.fixed(this, saveCookie));
+            } else {
+                associateLookup(Lookups.fixed(this));
+                saveCookie = null;
+            }
+            firePropertyChange("modified", !modified, modified);
+        }
+    }
+    
+    private void resetModified() {
+        if (modified) {
+            modified = false;
+            // Verifica se il lookup è già impostato correttamente prima di associarlo
+            if (getLookup().lookup(RestClientTopComponent.class) == null) {
+                associateLookup(Lookups.fixed(this));
+            }
+            firePropertyChange(PROP_DIRTY, true, false);
+        }
+    }
+
+    private void markAsModified() {
+        if (!modified) {
+            modified = true;
+            saveCookie = this;
+            // Aggiorna il lookup solo se necessario
+            if (getLookup().lookup(SaveCookie.class) == null) {
+                associateLookup(Lookups.fixed(this, saveCookie));
+            }
+            firePropertyChange(PROP_DIRTY, false, true);
+        }
+    }
+
+    private void markAsUnmodified() {
+        if(modified) {
+            modified = false;
+            saveCookie = null;
+            //associateLookup(Lookups.fixed(this));
+            firePropertyChange(PROP_DIRTY, true, false);
+        }
+    }
+
+
+    @Override
+    public Lookup getLookup() {
+        if (modified && saveCookie != null) {
+            return Lookups.fixed(this, saveCookie);
+        }
+        return Lookups.singleton(this);
+    }
+
+    @Override
+    protected void componentOpened() {
+        super.componentOpened();
+        urlPanel.requestUrlFocus();
+        // Non chiamare resetModified() qui se non necessario
+        // La modifica viene gestita dai listener
+        //resetModified(); // Resetta lo stato all'apertura
+    }
+
+    @Override
+    protected void componentActivated() {
+
+    }
+
+    @Override
+    public void save() throws IOException {
+        if (!modified) return;
+
+        try {
+            saveToFile();
+            markAsUnmodified(); // Aggiungi questo
+            setDisplayName(currentFile.getNameExt());
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+            throw ex;
+        }
+    }
+    
+    @Override
+    public boolean canClose() {
+        if (!modified) {
+            return true;
+        }
+
+        NotifyDescriptor.Confirmation nd = new NotifyDescriptor.Confirmation(
+            "File modificato. Salvare le modifiche?",
+            "Conferma Salvataggio",
+            NotifyDescriptor.YES_NO_CANCEL_OPTION);
+
+        Object res = DialogDisplayer.getDefault().notify(nd);
+        if (res == NotifyDescriptor.YES_OPTION) {
+            try {
+                save();
+                return true; // Chiudi dopo il salvataggio
+            } catch (IOException ex) {
+                Exceptions.printStackTrace(ex);
+                return false;
+            }
+        } else if (res == NotifyDescriptor.NO_OPTION) {
+            return true; // Chiudi senza salvare
+        }
+        return false; // Annulla chiusura
+    }
+ 
+    /*
+    @Override
+    public boolean canClose() {
+        if (modified) {
+            NotifyDescriptor.Confirmation nd = new NotifyDescriptor.Confirmation(
+                    "File modificato. Salvare le modifiche?",
+                    "Conferma Salvataggio",
+                    NotifyDescriptor.YES_NO_OPTION);
+
+            Object res = DialogDisplayer.getDefault().notify(nd);
+            if (res == NotifyDescriptor.YES_OPTION) {
+                try {
+                    save();
+                    return true;
+                } catch (IOException ex) {
+                    if (ex instanceof FileAlreadyLockedException) {
+                        NotifyDescriptor.Message msg = new NotifyDescriptor.Message(
+                            "Il file è già bloccato. Chiudi altre istanze e riprova.",
+                            NotifyDescriptor.ERROR_MESSAGE);
+                        DialogDisplayer.getDefault().notify(msg);
+                    } else {
+                        Exceptions.printStackTrace(ex);
+                    }
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+*/
+    @Override
+    public void componentClosed() {
+        // TODO add custom code on component closing
+    }
+
+    public FileObject getFile() {
+        return currentFile;
+    }
+
+    public void setFile(FileObject file) {
+        this.currentFile = file;
+        setDisplayName("Editor per: " + file.getNameExt());
+    }
+    
+    public void saveToFile() throws IOException {
+        if (currentFile != null) {
+            FileLock lock = null;
+            OutputStream out = null;
+            try {
+                lock = currentFile.lock();
+                out = currentFile.getOutputStream(lock);
+                Properties props = new Properties();
+                writeProperties(props);
+                props.store(out, "Rest Client Configuration");
+                markAsUnmodified();
+                setDisplayName(currentFile.getNameExt());
+            } finally {
+                if (out != null) {
+                    out.close();
+                }
+                if (lock != null) {
+                    lock.releaseLock();
+                }
+            }
+        }
+    }
+
+    /*
+    public void saveToFile() throws IOException {
+        if (currentFile != null) {
+            FileLock lock = null;
+            try {
+                lock = currentFile.lock();
+                try (OutputStream out = currentFile.getOutputStream()) {
+                    Properties props = new Properties();
+                    writeProperties(props);
+                    props.store(out, "Rest Client Configuration");
+                    markAsUnmodified();
+                    setDisplayName(currentFile.getNameExt());
+                } catch (Exception e) {
+                    
+                }
+            } finally {
+                if (lock != null) {
+                    lock.releaseLock();
+                }
+            }
+        }
+    }
+    */
+    public void readFile() {
+        if (currentFile != null) {
+            try (InputStream inp = currentFile.getInputStream()) {
+                Properties props = new Properties();
+
+                props.load(inp);
+                readProperties(props);
+                // Aggiorna il nome della finestra
+                setDisplayName(currentFile.getNameExt());
+
+                // Mostra conferma
+                /*
+                String message = "Configuration read successfully";
+                NotifyDescriptor nd = new NotifyDescriptor.Message(message, NotifyDescriptor.INFORMATION_MESSAGE);
+                DialogDisplayer.getDefault().notify(nd);*/
+            } catch (IOException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+        }
+    }
+    
+    @Override
+    protected void componentDeactivated() {
+        super.componentDeactivated();
+        if(modified) {
+            try {
+                save();
+            } catch (IOException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+        }
+    }
+/*
+    private void saveAs() {
+        FileDialog fd = new FileDialog(new JFrame(), "Save REST Client Config", FileDialog.SAVE);
+        fd.setFile("*.restclient");
+        fd.setVisible(true);
+
+        if (fd.getFile() != null) {
+            String fileName = fd.getFile().endsWith(".restclient")
+                    ? fd.getFile() : fd.getFile() + ".restclient";
+
+            try {
+                FileObject folder = FileUtil.toFileObject(Paths.get(fd.getDirectory()));
+                FileObject file = FileUtil.createData(folder, fileName);
+                currentFile = file;
+                saveToFile();
+            } catch (IOException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+        }
+    }
+*/
+    /*
+    // Modifica la dichiarazione della classe SaveAction aggiungendo 'static'
+    @ActionID(category = "File", id = "com.lb.netbeans.rest.client.SaveAction")
+    @ActionRegistration(displayName = "Save REST Client Config")
+    @ActionReference(path = "Menu/File", position = 1500)
+    public static class SaveAction implements ActionListener {  // Aggiunto 'static' qui
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            // Per accedere ai membri non-static della classe esterna
+            RestClientTopComponent topComponent
+                    = (RestClientTopComponent) WindowManager.getDefault().findTopComponent("RestClientTopComponent");
+            if (topComponent != null) {
+                topComponent.saveToFile();
+            }
+        }
+    }
+     */
+    private void setupModificationListeners() {
+        urlPanel.addRequestMethodActionListener(e -> markAsModified());
+        urlPanel.addUrlDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent de) {
+                markAsModified();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent de) {
+                markAsModified();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent de) {
+                markAsModified();
+            }
+        });
+        authPanel.addComboBoxListener(e -> markAsModified());
+        authPanel.addTokenDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent de) {
+                markAsModified();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent de) {
+                markAsModified();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent de) {
+                markAsModified();
+            }
+        });
+
+        headersPanel.addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent de) {
+                markAsModified();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent de) {
+                markAsModified();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent de) {
+                markAsModified();
+            }
+        });
+
+        // Aggiungere listener per il body panel
+        bodyPanel.addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent de) {
+                markAsModified();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent de) {
+                markAsModified();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent de) {
+                markAsModified();
+            }
+        });
+
+        // Aggiungere listener per il combo box del body type
+        bodyPanel.addBodyTypeChangeListener(e -> markAsModified());
+
+        // Aggiungere listener per i campi di autenticazione
+        authPanel.addUsernameDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                markAsModified();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                markAsModified();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                markAsModified();
+            }
+        });
+
+        authPanel.addPasswordDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                markAsModified();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                markAsModified();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                markAsModified();
+            }
+        });
+    }
+    
+    public void writeProperties(java.util.Properties p) {
+        // Aggiungi tutte le proprietà necessarie
+        p.setProperty(VERSION_PROPERTY, "1.0");
+        p.setProperty(URL_PROPERTY, urlPanel.getUrl() != null ? urlPanel.getUrl() : "");
+        p.setProperty(REQUEST_METHOD_PROPERTY, urlPanel.getRequestMethod());
+        p.setProperty(AUTH_TYPE_PROPERTY, authPanel.getAuthType());
+        p.setProperty(USERNAME_PROPERTY, authPanel.getUsername());
+        p.setProperty(HEADERS_PROPERTY, headersPanel.getValuesString());
+        p.setProperty(BODY_TYPE_PROPERTY, bodyPanel.getBodyType());
+        p.setProperty(BODY_PROPERTY, bodyPanel.getBody() != null ? bodyPanel.getBody() : "");
+
+        if (authPanel.isSavable()) {
+            p.setProperty(PASSWORD_PROPERTY, authPanel.getPassword());
+            p.setProperty(PASSWORD_SAVE_PROPERTY, "true");
+        } else {
+            p.setProperty(PASSWORD_PROPERTY, "");
+            p.setProperty(PASSWORD_SAVE_PROPERTY, "false");
+        }
+        
+        // Aggiungi le nuove proprietà OAuth2
+        p.setProperty(GRANT_TYPE_PROPERTY, authPanel.getGrantType());
+        p.setProperty(ACCESS_TOKEN_URL_PROPERTY, authPanel.getAccessTokenUrl());
+        p.setProperty(CLIENT_ID_PROPERTY, authPanel.getClientId());
+        p.setProperty(CLIENT_SECRET_PROPERTY, authPanel.getClientSecret());
+        p.setProperty(SCOPE_PROPERTY, authPanel.getScope());
+        p.setProperty(AUTH_MODE_PROPERTY, authPanel.getAuthenticationMode());
+        
+        p.setProperty(AUTH_URL_PROPERTY, authPanel.getAuthUrl());
+        p.setProperty(CALLBACK_URL_PROPERTY, authPanel.getCallbackUrl());
+        p.setProperty(CODE_VERIFIER_PROPERTY, authPanel.getCodeVerifier());
+        p.setProperty(CODE_CHALLENGE_PROPERTY, authPanel.getCodeChallenge());
+    }
+
+    public void readProperties(java.util.Properties p) {
+//        String version = p.getProperty(VERSION_PROPERTY);
+        String url = p.getProperty(URL_PROPERTY);
+
+        if (url != null && !url.isEmpty()) {
+            setUrl(url);
+        }
+
+        String requestMethod = p.getProperty(REQUEST_METHOD_PROPERTY);
+        if (requestMethod != null && !requestMethod.isEmpty()) {
+            urlPanel.setRequestMethod(requestMethod);
+        }
+
+        String username = p.getProperty(USERNAME_PROPERTY);
+        if (username != null && !username.isEmpty()) {
+            authPanel.setUsername(username);
+        }
+
+        String authType = p.getProperty(AUTH_TYPE_PROPERTY);
+        if (authType != null && !authType.isEmpty()) {
+            authPanel.setAuthType(authType);
+        }
+
+        String headers = p.getProperty(HEADERS_PROPERTY);
+        if (headers != null && !headers.isEmpty()) {
+            headersPanel.setValuesString(headers);
+        }
+
+        String bodyType = p.getProperty(BODY_TYPE_PROPERTY);
+        if (bodyType != null && !bodyType.isEmpty()) {
+            bodyPanel.setBodyType(bodyType);
+        }
+
+        String body = p.getProperty(BODY_PROPERTY);
+        if (body != null && !body.isEmpty()) {
+            bodyPanel.setBody(body);
+        }
+        
+        String savePassword = p.getProperty(PASSWORD_SAVE_PROPERTY);
+        if (savePassword != null) {
+            boolean save = Boolean.parseBoolean(savePassword);
+            authPanel.setSavable(save);
+            if (save) {
+                String password = p.getProperty(PASSWORD_PROPERTY);
+                if (password != null) {
+                    authPanel.setPassword(password);
+                }
+            }
+        }
+
+        String grantType = p.getProperty(GRANT_TYPE_PROPERTY);
+        if (grantType != null) {
+            authPanel.setGrantType(grantType);
+        }
+
+        String accessTokenUrl = p.getProperty(ACCESS_TOKEN_URL_PROPERTY);
+        if (accessTokenUrl != null) {
+            authPanel.setAccessTokenUrl(accessTokenUrl);
+        }
+
+        String clientId = p.getProperty(CLIENT_ID_PROPERTY);
+        if (clientId != null) {
+            authPanel.setClientId(clientId);
+        }
+
+        String clientSecret = p.getProperty(CLIENT_SECRET_PROPERTY);
+        if (clientSecret != null) {
+            authPanel.setClientSecret(clientSecret);
+        }
+
+        String scope = p.getProperty(SCOPE_PROPERTY);
+        if (scope != null) {
+            authPanel.setScope(scope);
+        }
+        
+        String authMode = p.getProperty(AUTH_MODE_PROPERTY);
+        if (authMode != null) {
+            authPanel.setAuthenticationMode(authMode);
+            authPanel.enableDisableGetNewAccessTokenButton();
+        }
+        
+        String authUrl = p.getProperty(AUTH_URL_PROPERTY);
+        if (authUrl != null) {
+            authPanel.setAuthUrl(authUrl);
+        }
+
+        String callbackUrl = p.getProperty(CALLBACK_URL_PROPERTY);
+        if (callbackUrl != null) {
+            authPanel.setCallbackUrl(callbackUrl);
+        }
+
+        String codeVerifier = p.getProperty(CODE_VERIFIER_PROPERTY);
+        if (codeVerifier != null) {
+            authPanel.setCodeVerifier(codeVerifier);
+        }
+
+        String codeChallenge = p.getProperty(CODE_CHALLENGE_PROPERTY);
+        if (codeChallenge != null) {
+            authPanel.setCodeChallenge(codeChallenge);
+        }
+    }
+
+    public String getUrl() {
+        return urlPanel.getUrl();
+    }
+
+    public void setUrl(String url) {
+        paramsPanel.removeTableModelListener(tableParamsListener);
+        urlPanel.setUrl(url);
+        paramsPanel.addTableModelListener(tableParamsListener);
+        setDisplayName(urlPanel.getRequestMethod() + " " + urlPanel.getDisplayUrl());
+        setToolTipText(urlPanel.getUrl());
+        urlPanel.requestUrlFocus();
+    }
+
+    public String getDisplayUrl() {
+        return urlPanel.getDisplayUrl();
+    }
+
+    public String getRequestMethod() {
+        return urlPanel.getRequestMethod();
+    }
+
+    public void setRequestMethod(String method) {
+        urlPanel.setRequestMethod(method);
+    }
+
+    public MultivaluedMap<String, String> getHeaders() {
+        return headersPanel.getValues();
+    }
+
+    public void setHeaders(MultivaluedMap<String, String> headers) {
+        headersPanel.setValues(headers);
+    }
+
+    public void addHeader(String key, String value) {
+        headersPanel.addRow(key, value);
+    }
+
+    public void clearHeaders() {
+        headersPanel.clearValues();
+    }
+
+    private void sendRequest() {
+        if (urlPanel.getUrl().isBlank()) {
+            return;
+        }
+        responsePanel.clear();
+        setDisplayName(urlPanel.getRequestMethod() + " " + urlPanel.getDisplayUrl());
+        setToolTipText(urlPanel.getUrl());
+        request();
+        logger.log(Level.INFO, "Request method: {0}, Auth type: {1}, Body type: {2}",
+                new Object[]{urlPanel.getRequestMethod(), authPanel.getAuthType(), bodyPanel.getBodyType()});
+    }
+
+    private void request() {
+        logger.log(Level.INFO, "URL: {0}", urlPanel.getUrl());
+        processor.post(() -> {
+            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            ProgressHandle progressHandle = ProgressHandle.createHandle("Sending request");
+            progressHandle.start();
+
+            if (headersPanel.getRowCount() > 0) {
+                MultivaluedMap<String, String> headers = headersPanel.getValues();
+                client.setHeaders(headers);
+            }
+
+            client.setAuthType(authPanel.getAuthType());
+            if (authPanel.getAuthType().equals(RestClient.BASIC_AUTH)) {
+                client.setCredentials(authPanel.getUsername(), authPanel.getPassword());
+            }
+
+            String body = "";
+            if (!bodyPanel.getBodyType().equals("None")) {
+                body = bodyPanel.getBody();
+            }
+            client.setBody(body);
+            client.setBodyType(bodyPanel.getBodyType());
+
+            try {
+                String url = urlPanel.getUrl();
+                if (!url.startsWith("http")) {
+                    url = "http://" + urlPanel.getUrl();
+                }
+                String response = client.request(url, urlPanel.getRequestMethod());
+                MultivaluedMap<String, Object> responseHeaders = client.getResponseHeaders();
+                updateResponsePanel(response, responseHeaders);
+            } catch (ProcessingException ex) {
+                logger.warning(ex.getMessage());
+                String response = (ex.getMessage().contains("PKIX path building failed"))
+                        ? "Could not get response: failed to verify SSL certificate\n"
+                        + "SSL certificate verification is enabled. "
+                        + "You may disable it under Tools->Options->Miscellaneous->REST Client"
+                        : ex.getMessage();
+                responsePanel.setResponse(response);
+                responsePanel.showResponse();
+            } finally {
+                progressHandle.finish();
+                setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            }
+
+        });
+
+    }
+
+    private void updateResponsePanel(String response, MultivaluedMap<String, Object> responseHeaders) {
+        SwingUtilities.invokeLater(() -> {
+
+            String contentType = "";
+            if (responseHeaders.containsKey("content-type") && !responseHeaders.get("content-type").isEmpty()) {
+                contentType = (String) responseHeaders.get("content-type").get(0);
+            }
+            responsePanel.setContentType(contentType);
+
+            responsePanel.setResponse(response);
+            responsePanel.showResponse();
+            responsePanel.setStatus("Status: " + client.getStatus() + " " + client.getStatusText()
+                    + "  Time: " + client.getElapsedTime() + " ms");
+
+            for (Map.Entry<String, List<Object>> entry : responseHeaders.entrySet()) {
+                String key = entry.getKey();
+                String val = entry.getValue().toString();
+                responsePanel.addHeader(key, val);
+            }
+        });
+    }
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        splitPane = new javax.swing.JSplitPane();
+        requestPanel = new javax.swing.JPanel();
+        requestTabbedPane = new javax.swing.JTabbedPane();
+        paramsPanel = new com.lb.netbeans.rest.client.ui.TablePanel();
+        authPanel = new com.lb.netbeans.rest.client.ui.AuthPanel();
+        headersPanel = new com.lb.netbeans.rest.client.ui.TablePanel();
+        bodyPanel = new com.lb.netbeans.rest.client.ui.BodyPanel();
+        urlPanel = new com.lb.netbeans.rest.client.ui.UrlPanel();
+        responsePanel = new com.lb.netbeans.rest.client.ui.ResponsePanel();
+
+        setPreferredSize(new java.awt.Dimension(800, 600));
+
+        splitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
+
+        requestPanel.setPreferredSize(new java.awt.Dimension(800, 240));
+
+        requestTabbedPane.setPreferredSize(new java.awt.Dimension(705, 150));
+        requestTabbedPane.addTab("Params", paramsPanel);
+        requestTabbedPane.addTab("Authorisation", authPanel);
+        requestTabbedPane.addTab("Headers", headersPanel);
+        requestTabbedPane.addTab("Body", bodyPanel);
+
+        javax.swing.GroupLayout requestPanelLayout = new javax.swing.GroupLayout(requestPanel);
+        requestPanel.setLayout(requestPanelLayout);
+        requestPanelLayout.setHorizontalGroup(
+            requestPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(requestPanelLayout.createSequentialGroup()
+                .addComponent(requestTabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
+            .addComponent(urlPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        );
+        requestPanelLayout.setVerticalGroup(
+            requestPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(requestPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(urlPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(3, 3, 3)
+                .addComponent(requestTabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 245, Short.MAX_VALUE))
+        );
+
+        requestTabbedPane.getAccessibleContext().setAccessibleName("");
+
+        splitPane.setTopComponent(requestPanel);
+        splitPane.setBottomComponent(responsePanel);
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        this.setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(splitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 794, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(splitPane)
+                .addContainerGap())
+        );
+    }// </editor-fold>//GEN-END:initComponents
+
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private com.lb.netbeans.rest.client.ui.AuthPanel authPanel;
+    private com.lb.netbeans.rest.client.ui.BodyPanel bodyPanel;
+    private com.lb.netbeans.rest.client.ui.TablePanel headersPanel;
+    private com.lb.netbeans.rest.client.ui.TablePanel paramsPanel;
+    private javax.swing.JPanel requestPanel;
+    private javax.swing.JTabbedPane requestTabbedPane;
+    private com.lb.netbeans.rest.client.ui.ResponsePanel responsePanel;
+    private javax.swing.JSplitPane splitPane;
+    private com.lb.netbeans.rest.client.ui.UrlPanel urlPanel;
+    // End of variables declaration//GEN-END:variables
+}

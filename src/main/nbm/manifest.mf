@@ -1,9 +1,9 @@
 Manifest-Version: 1.0
-OpenIDE-Module-Localizing-Bundle: com/javierllorente/netbeans/rest/client/Bundle.properties
+OpenIDE-Module-Localizing-Bundle: com/lb/netbeans/rest/client/Bundle.properties
 OpenIDE-Module-Requires: org.openide.windows.WindowManager
 OpenIDE-Module-Recommends: cnb.org.netbeans.modules.javascript2.editor
 OpenIDE-Module-Name: REST Client
 OpenIDE-Module-Display-Category: Tools
 OpenIDE-Module-Short-Description: A REST client for NetBeans
-OpenIDE-Module-Long-Description: Provides a basic REST client for NetBeans
-OpenIDE-Module-Implementation-Version: 0.7.12
+OpenIDE-Module-Long-Description: Provides REST client for NetBeans
+OpenIDE-Module-Implementation-Version: 1.0.0
