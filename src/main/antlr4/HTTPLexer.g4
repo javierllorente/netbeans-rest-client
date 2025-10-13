@@ -25,7 +25,9 @@
  */
 lexer grammar HTTPLexer;
 
-WS: [ \t];
+tokens { OPEN_BLOCK_BRAKET, CLOSE_BLOCK_BRAKET }
+    
+    WS: [ \t];
 NEWLINE: ('\r'? '\n');
 REQUEST_SEPARATOR : '###' (~[\r\n])*;
 COMMENT: ('#' | '//') (~[\r\n])*;
@@ -49,6 +51,7 @@ HTTP_PROTOCOL : 'HTTP';
 
 COLON: ':';
 DOT: '.';
+COMMA: ',';
 SLASH: '/';
 QUESTION_MARK: '?';
 HASH: '#';
@@ -58,8 +61,6 @@ AMPERSAND: '&';
 PERCENT: '%';
 OPEN_BRAKET: '[';
 CLOSE_BRAKET: ']';
-OPEN_BLOCK_BRAKET: '{';
-CLOSE_BLOCK_BRAKET: '}';
 QUOTE: '"';
 
 fragment DIGIT: [0-9];
@@ -142,5 +143,45 @@ ENV_VARIABLE : '{{' OPTIONAL_WS (ALPHA_CHARS DIGITS)* OPTIONAL_WS '}}';
 MULTIPART_BOUNDARY : '--'  (~[\r\n])* '-' '--';
 MULTIPART_PART      : '--'  (~[\r\n])* '-';
 
+// requestBody start
+// After requestLine/header consumed their NEWLINE:
+// „\n{" means blank line before body (correct)
+// „{" means no blank line before body (error, but we still enter JSON mode for recovery)
+BODY_START_WITH_BLANK: NEWLINE '{' -> pushMode(JSON);
+BODY_START_NO_BLANK: '{' -> pushMode(JSON);
+
 // Ignore everything else
 ERROR : .;
+
+// JSON-Mode: HTTP-Kewords are inactive here
+mode JSON;
+
+JSON_LBRACE   : '{' -> type(OPEN_BLOCK_BRAKET) ;
+JSON_RBRACE   : '}' -> type(CLOSE_BLOCK_BRAKET), popMode ;
+JSON_LBRACK   : '[' -> type(OPEN_BRAKET) ;
+JSON_RBRACK   : ']' -> type(CLOSE_BRAKET) ;
+JSON_COLON    : ':' -> type(COLON) ;
+JSON_COMMA    : ',' -> type(COMMA) ;
+
+STRING
+    : '"' ( '\\' . | ~["\\\r\n] )* '"'
+    ;
+
+NUMBER
+    : '-'? DIGIT+ ('.' DIGIT+)? ([eE][+-]? DIGIT+)?
+    ;
+
+TRUE  : 'true' ;
+FALSE : 'false';
+NULL  : 'null' ;
+
+JSON_NEWLINE : ('\r'? '\n') -> type(NEWLINE);
+JSON_WS      : [ \t]+        -> type(WS);
+
+JSON_REQUEST_SEPARATOR
+    : '###' (~[\r\n])* -> type(REQUEST_SEPARATOR), popMode
+    ;
+
+JSON_EOF_CLEANUP
+    : EOF -> popMode, type(EOF)
+    ;

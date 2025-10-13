@@ -29,25 +29,13 @@ public class HTTPParserBaseListener implements HTTPParserListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterFirstRequest(HTTPParser.FirstRequestContext ctx) { }
+	@Override public void enterRequestBlock(HTTPParser.RequestBlockContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitFirstRequest(HTTPParser.FirstRequestContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterRequestBlockWithSeparator(HTTPParser.RequestBlockWithSeparatorContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitRequestBlockWithSeparator(HTTPParser.RequestBlockWithSeparatorContext ctx) { }
+	@Override public void exitRequestBlock(HTTPParser.RequestBlockContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -65,6 +53,18 @@ public class HTTPParserBaseListener implements HTTPParserListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterInvalidBodyWithoutRequest(HTTPParser.InvalidBodyWithoutRequestContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitInvalidBodyWithoutRequest(HTTPParser.InvalidBodyWithoutRequestContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterRequestHeaders(HTTPParser.RequestHeadersContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -77,6 +77,54 @@ public class HTTPParserBaseListener implements HTTPParserListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterHeaderLine(HTTPParser.HeaderLineContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitHeaderLine(HTTPParser.HeaderLineContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterInvalidHeaderLine(HTTPParser.InvalidHeaderLineContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitInvalidHeaderLine(HTTPParser.InvalidHeaderLineContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterInvalidHeaderContent(HTTPParser.InvalidHeaderContentContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitInvalidHeaderContent(HTTPParser.InvalidHeaderContentContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterRequestBodySection(HTTPParser.RequestBodySectionContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitRequestBodySection(HTTPParser.RequestBodySectionContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterRequestBody(HTTPParser.RequestBodyContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -84,6 +132,138 @@ public class HTTPParserBaseListener implements HTTPParserListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitRequestBody(HTTPParser.RequestBodyContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterJsonBodyContent(HTTPParser.JsonBodyContentContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitJsonBodyContent(HTTPParser.JsonBodyContentContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterJsonObject(HTTPParser.JsonObjectContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitJsonObject(HTTPParser.JsonObjectContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterPair(HTTPParser.PairContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitPair(HTTPParser.PairContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterJsonArray(HTTPParser.JsonArrayContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitJsonArray(HTTPParser.JsonArrayContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterJsonValue(HTTPParser.JsonValueContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitJsonValue(HTTPParser.JsonValueContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterJsonString(HTTPParser.JsonStringContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitJsonString(HTTPParser.JsonStringContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterJsonStringContent(HTTPParser.JsonStringContentContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitJsonStringContent(HTTPParser.JsonStringContentContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterJsonStringChar(HTTPParser.JsonStringCharContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitJsonStringChar(HTTPParser.JsonStringCharContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterJsonNumber(HTTPParser.JsonNumberContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitJsonNumber(HTTPParser.JsonNumberContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterJsonBareWord(HTTPParser.JsonBareWordContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitJsonBareWord(HTTPParser.JsonBareWordContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterSpace(HTTPParser.SpaceContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitSpace(HTTPParser.SpaceContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -173,18 +353,6 @@ public class HTTPParserBaseListener implements HTTPParserListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterSeparatorLine(HTTPParser.SeparatorLineContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitSeparatorLine(HTTPParser.SeparatorLineContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
 	@Override public void enterRequestLine(HTTPParser.RequestLineContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -192,6 +360,18 @@ public class HTTPParserBaseListener implements HTTPParserListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitRequestLine(HTTPParser.RequestLineContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterRequestLineWithBody(HTTPParser.RequestLineWithBodyContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitRequestLineWithBody(HTTPParser.RequestLineWithBodyContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

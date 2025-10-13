@@ -1,0 +1,602 @@
+/*
+ * Copyright 2025 Christian Lenz <christian.lenz@gmx.net>.
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package com.javierllorente.netbeans.rest.client.http.editor.syntax;
+
+import com.javierllorente.netbeans.rest.client.http.editor.syntax.antlr.HTTPLexer;
+import com.javierllorente.netbeans.rest.client.http.editor.syntax.antlr.HTTPParser;
+import java.util.ArrayList;
+import java.util.List;
+import org.antlr.v4.runtime.BaseErrorListener;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.RecognitionException;
+import org.antlr.v4.runtime.Recognizer;
+import org.antlr.v4.runtime.Token;
+import static org.junit.Assert.*;
+import org.junit.Test;
+
+/**
+ * Unit tests for HTTP Parser
+ *
+ * @author Christian Lenz
+ */
+public class HTTPParserTest {
+
+    /**
+     * Helper method to parse HTTP text and collect errors. This uses a
+     * simplified validation approach that mimics HTTPLangParserResult.
+     */
+    private List<String> parseAndGetErrors(String httpText) {
+        List<String> errors = new ArrayList<>();
+
+        HTTPLexer lexer = new HTTPLexer(CharStreams.fromString(httpText));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        HTTPParser parser = new HTTPParser(tokens);
+
+        // Collect parser errors
+        parser.removeErrorListeners();
+        parser.addErrorListener(new BaseErrorListener() {
+            @Override
+            public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol,
+                int line, int charPositionInLine, String msg,
+                RecognitionException e) {
+                errors.add(msg);
+            }
+        });
+
+        HTTPParser.HttpRequestsFileContext fileCtx = parser.httpRequestsFile();
+
+        // Perform validation (same as HTTPLangParserResult.validateRequestBodies)
+        if (fileCtx != null && tokens != null) {
+            for (HTTPParser.RequestBlockContext blockCtx : fileCtx.requestBlock()) {
+                if (blockCtx == null) {
+                    continue;
+                }
+
+                HTTPParser.RequestContext req = blockCtx.request();
+                if (req == null) {
+                    continue;
+                }
+
+                // Check requestLineWithBody
+                HTTPParser.RequestLineWithBodyContext reqLineWithBody = req.requestLineWithBody();
+                if (reqLineWithBody != null) {
+                    errors.add("Invalid content found: Unknown HTTP header");
+                    continue;
+                }
+
+                // Check regular requestBody
+                HTTPParser.RequestBodySectionContext bodySection = req.requestBodySection();
+                if (bodySection == null) {
+                    continue;
+                }
+
+                HTTPParser.RequestBodyContext body = bodySection.requestBody();
+                if (body == null || body.start == null) {
+                    continue;
+                }
+
+                int bodyTokenType = body.start.getType();
+
+                // BODY_START_NO_BLANK is always an error
+                if (bodyTokenType == HTTPLexer.BODY_START_NO_BLANK) {
+                    errors.add("Invalid content found: Unknown HTTP header");
+                } // BODY_START_WITH_BLANK needs blank line validation
+                else if (bodyTokenType == HTTPLexer.BODY_START_WITH_BLANK) {
+                    if (!hasBlankLineBefore(tokens, body.start)) {
+                        errors.add("Invalid content found: Unknown HTTP header");
+                    }
+                }
+            }
+        }
+
+        return errors;
+    }
+
+    /**
+     * Helper method to check if there's a blank line before
+     * BODY_START_WITH_BLANK token. This is the same logic as in
+     * HTTPLangParserResult.hasBlankLineBefore().
+     */
+    private boolean hasBlankLineBefore(CommonTokenStream tokens, org.antlr.v4.runtime.Token bodyToken) {
+        if (bodyToken == null || bodyToken.getType() != HTTPLexer.BODY_START_WITH_BLANK) {
+            return true;
+        }
+
+        if (tokens == null) {
+            return false;
+        }
+
+        int idx = bodyToken.getTokenIndex() - 1;
+
+        // Skip only WS tokens (not COMMENT)
+        while (idx >= 0 && tokens.get(idx).getType() == HTTPLexer.WS) {
+            idx--;
+        }
+
+        if (idx < 0) {
+            return false;
+        }
+
+        Token prev = tokens.get(idx);
+
+        // If previous token (after skipping WS) is NEWLINE, we have a blank line
+        if (prev.getType() == HTTPLexer.NEWLINE) {
+            return true;
+        }
+
+        // If previous token is COMMENT, check for TWO newlines before body
+        if (prev.getType() == HTTPLexer.COMMENT) {
+            idx--;
+
+            while (idx >= 0 && tokens.get(idx).getType() == HTTPLexer.WS) {
+                idx--;
+            }
+
+            if (idx >= 0 && tokens.get(idx).getType() == HTTPLexer.NEWLINE) {
+                idx--;
+
+                while (idx >= 0 && tokens.get(idx).getType() == HTTPLexer.WS) {
+                    idx--;
+                }
+
+                if (idx >= 0 && tokens.get(idx).getType() == HTTPLexer.NEWLINE) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Test Case 1: Valid POST request with headers Expected: No errors
+     */
+    @Test
+    public void testValidPostRequestWithHeaders() {
+        String httpText
+            = "### Request 1\n"
+            + "\n"
+            + "// POST request with json payload\n"
+            + "POST https://google.de HTTP/1.1\n"
+            + "content-type: application/json\n";
+
+        List<String> errors = parseAndGetErrors(httpText);
+
+        assertTrue("Expected no errors for valid POST request with headers, but got: " + errors,
+            errors.isEmpty());
+    }
+
+    /**
+     * Test Case 2: Valid GET request with headers and JSON body Expected: No
+     * errors
+     */
+    @Test
+    public void testValidGetRequestWithHeadersAndBody() {
+        String httpText
+            = "### Request 2\n"
+            + "\n"
+            + "GET http://test.de HTTP/1.1\n"
+            + "content-type: application/json\n"
+            + "\n"
+            + "{\n"
+            + "    \"test\": \"12\",\n"
+            + "    \"\": 12\n"
+            + "}\n";
+
+        List<String> errors = parseAndGetErrors(httpText);
+
+        assertTrue("Expected no errors for valid GET request with body, but got: " + errors,
+            errors.isEmpty());
+    }
+
+    /**
+     * Test Case 3: Valid GET request with body (no extra blank line) Expected:
+     * No errors
+     */
+    @Test
+    public void testValidGetRequestWithBody() {
+        String httpText
+            = "### Request 2\n"
+            + "\n"
+            + "GET http://test.de HTTP/1.1\n"
+            + "\n"
+            + "{\n"
+            + "    \"test\": \"12\"\n"
+            + "}\n";
+
+        List<String> errors = parseAndGetErrors(httpText);
+
+        assertTrue("Expected no errors for valid GET request with body, but got: " + errors,
+            errors.isEmpty());
+    }
+
+    /**
+     * Test Case 4: Request separator properly ends previous request Expected:
+     * No errors (separator cleanly ends Request 1)
+     */
+    @Test
+    public void testRequestSeparatorEndsRequest() {
+        String httpText
+            = "### Request 1\n"
+            + "\n"
+            + "POST https://google.de HTTP/1.1\n"
+            + "content-type: application/json\n"
+            + "### Test\n";
+
+        List<String> errors = parseAndGetErrors(httpText);
+
+        assertTrue("Expected no errors - separator should cleanly end request, but got: " + errors,
+            errors.isEmpty());
+    }
+
+    /**
+     * Test Case 5: JSON body without request line (unhappy path) Expected:
+     * Error "Request body requires a request line"
+     */
+    @Test
+    public void testBodyWithoutRequestLine() {
+        String httpText
+            = "### Test\n"
+            + "{\n"
+            + "    \"name\":12,\n"
+            + "    \"time\": \"Wed, 21 Oct 2015 18:27:50 GMT\"\n"
+            + "}\n";
+
+        List<String> errors = parseAndGetErrors(httpText);
+
+        assertFalse("Expected at least one error for body without request line",
+            errors.isEmpty());
+
+        boolean foundExpectedError = errors.stream()
+            .anyMatch(msg -> msg.contains("Request body requires a request line"));
+
+        assertTrue("Expected error message 'Request body requires a request line', but got: " + errors,
+            foundExpectedError);
+    }
+
+    /**
+     * Test Case 6: Body directly after request line without blank line (unhappy
+     * path) Expected: Error "Unknown HTTP header"
+     */
+    @Test
+    public void testBodyWithoutBlankLine() {
+        String httpText
+            = "GET http://test.de HTTP/1.1\n"
+            + "{\n"
+            + "    \"test\": \"12\"\n"
+            + "}\n";
+
+        List<String> errors = parseAndGetErrors(httpText);
+
+        assertFalse("Expected at least one error for body without blank line",
+            errors.isEmpty());
+
+        boolean foundExpectedError = errors.stream()
+            .anyMatch(msg -> msg.contains("Unknown HTTP header"));
+
+        assertTrue("Expected error message 'Unknown HTTP header', but got: " + errors,
+            foundExpectedError);
+    }
+
+    /**
+     * Test Case 7: Body directly after request line without blank but with
+     * request seperator (unhappy path) Expected: Error "Unknown HTTP header"
+     */
+    @Test
+    public void testBodyWithoutBlankLineWithRequestSeperator() {
+        String httpText
+            = "### With requestseperator\n"
+            + "GET http://test.de HTTP/1.1\n"
+            + "{\n"
+            + "    \"test\": \"12\"\n"
+            + "}\n";
+
+        List<String> errors = parseAndGetErrors(httpText);
+
+        assertFalse("Expected at least one error for body without blank line",
+            errors.isEmpty());
+
+        boolean foundExpectedError = errors.stream()
+            .anyMatch(msg -> msg.contains("Unknown HTTP header"));
+
+        assertTrue("Expected error message 'Unknown HTTP header', but got: " + errors,
+            foundExpectedError);
+    }
+
+    /**
+     * Test Case 8: Invalid header content (unhappy path) Expected: Error
+     * "Unknown HTTP header"
+     */
+    @Test
+    public void testInvalidHeaderContent() {
+        String httpText
+            = "GET http://test.de HTTP/1.1\n"
+            + "this is not a valid header\n";
+
+        List<String> errors = parseAndGetErrors(httpText);
+
+        assertFalse("Expected at least one error for invalid header",
+            errors.isEmpty());
+
+        boolean foundExpectedError = errors.stream()
+            .anyMatch(msg -> msg.contains("Unknown HTTP header"));
+
+        assertTrue("Expected error message 'Unknown HTTP header', but got: " + errors,
+            foundExpectedError);
+    }
+
+    /**
+     * Test Case 9: Valid request with only URL (no method, no version)
+     * Expected: No errors
+     */
+    @Test
+    public void testValidRequestWithOnlyUrl() {
+        String httpText
+            = "test.de\n";
+
+        List<String> errors = parseAndGetErrors(httpText);
+
+        assertTrue("Expected no errors for request with only URL, but got: " + errors,
+            errors.isEmpty());
+    }
+
+    /**
+     * Test Case 10: Multiple empty request separators Expected: No errors
+     */
+    @Test
+    public void testMultipleEmptySeparators() {
+        String httpText
+            = "###\n"
+            + "###\n"
+            + "### Test\n";
+
+        List<String> errors = parseAndGetErrors(httpText);
+
+        assertTrue("Expected no errors for multiple empty separators, but got: " + errors,
+            errors.isEmpty());
+    }
+
+    /**
+     * Test Case 11: Request with comment and space before body Expected: No
+     * errors (comment counts as blank separator)
+     */
+    @Test
+    public void testRequestWithCommentAndSpaceBeforeBodyWithoutHeader() {
+        String httpText
+            = "GET http://test.de HTTP/1.1\n"
+            + "// This is a comment\n"
+            + "\n"
+            + "{\n"
+            + "    \"test\": \"12\"\n"
+            + "}\n";
+
+        List<String> errors = parseAndGetErrors(httpText);
+
+        assertTrue("Expected no errors for space after comment before body, but got: " + errors,
+            errors.isEmpty());
+    }
+
+    /**
+     * Test Case 12: Request with comment before body and space before comment
+     * Expected: No errors (comment counts as blank separator)
+     */
+    @Test
+    public void testRequestWithCommentAndSpaceBeforeCommentWithoutHeader() {
+        String httpText
+            = "GET http://test.de HTTP/1.1\n"
+            + "\n"
+            + "# This is a comment\n"
+            + "{\n"
+            + "    \"test\": \"12\"\n"
+            + "}\n";
+
+        List<String> errors = parseAndGetErrors(httpText);
+
+        assertTrue("Expected no errors for space after comment before body, but got: " + errors,
+            errors.isEmpty());
+    }
+
+    /**
+     * Test Case 13: Request with comment before body Expected: Error "Unknown
+     * HTTP header" (every request needs blank line before body)
+     */
+    @Test
+    public void testRequestWithCommentBeforeBodyWithoutHeader() {
+        String httpText
+            = "GET http://test.de HTTP/1.1\n"
+            + "// This is a comment\n"
+            + "{\n"
+            + "    \"test\": \"12\"\n"
+            + "}\n";
+
+        List<String> errors = parseAndGetErrors(httpText);
+
+        assertFalse("Expected at least one error for invalid header",
+            errors.isEmpty());
+
+        boolean foundExpectedError = errors.stream()
+            .anyMatch(msg -> msg.contains("Unknown HTTP header"));
+
+        assertTrue("Expected error message 'Unknown HTTP header', but got: " + errors,
+            foundExpectedError);
+    }
+
+    /**
+     * Test Case 14: Complete HTTPExample content (mixed happy/unhappy)
+     * Expected: Exactly 1 error for body without request line
+     */
+    @Test
+    public void testCompleteHTTPExample() {
+        String httpText
+            = "### Request 1\n"
+            + "\n"
+            + "// POST request with json payload\n"
+            + "POST https://google.de HTTP/1.1\n"
+            + "content-type: application/json\n"
+            + "### Test\n"
+            + "{\n"
+            + "    \"name\":12,\n"
+            + "    \"time\": \"Wed, 21 Oct 2015 18:27:50 GMT\",\n"
+            + "    \"path\": \"./test/tstse\",\n"
+            + "    \"urlstring\": \"https://google.de\",\n"
+            + "    \"commentstring\": \"//google.de\",\n"
+            + "    \"seperatorstring\": \"###google.de\",\n"
+            + "    \"methodstring\": \"GET\",\n"
+            + "    \"header\": \"content-type: application/json\",\n"
+            + "    \"\": 33\n"
+            + "}\n"
+            + "\n"
+            + "### Request 2\n"
+            + "\n"
+            + "GET http://test.de HTTP/1.1\n"
+            + "content-type: application/json\n"
+            + "\n"
+            + "{\n"
+            + "    \"test\": \"12\",\n"
+            + "    \"\": 12\n"
+            + "}\n"
+            + "\n"
+            + "\n"
+            + "### Request 2\n"
+            + "\n"
+            + "GET http://test.de HTTP/1.1\n"
+            + "\n"
+            + "{\n"
+            + "    \"test\": \"12\"\n"
+            + "}\n";
+
+        List<String> errors = parseAndGetErrors(httpText);
+
+        // Should have exactly 1 error: body without request line after "### Test"
+        assertEquals("Expected exactly 1 error for complete HTTPExample.http, but got: " + errors,
+            1, errors.size());
+
+        boolean foundExpectedError = errors.stream()
+            .anyMatch(msg -> msg.contains("Request body requires a request line"));
+
+        assertTrue("Expected error message 'Request body requires a request line', but got: " + errors,
+            foundExpectedError);
+    }
+
+    /**
+     * Test Case 15: Body directly after bare request without blank line
+     * Expected: Error "Unknown HTTP header" (every request needs blank line
+     * before body)
+     */
+    @Test
+    public void testBareRequestWithoutBlankLineBeforeBody() {
+        String httpText
+            = "### Test\n"
+            + "GET post.de\n"
+            + "{\n"
+            + "    \"name\":12\n"
+            + "}\n";
+
+        List<String> errors = parseAndGetErrors(httpText);
+
+        assertFalse("Expected at least one error for bare request without blank line before body",
+            errors.isEmpty());
+
+        boolean foundExpectedError = errors.stream()
+            .anyMatch(msg -> msg.contains("Unknown HTTP header"));
+
+        assertTrue("Expected error message 'Unknown HTTP header', but got: " + errors,
+            foundExpectedError);
+    }
+
+    /**
+     * Test Case 16: Simple requestline Expected: No errors
+     */
+    @Test
+    public void testValieSimpleRequestLine() {
+        String httpText = "GET http://test.de HTTP/1.1";
+
+        List<String> errors = parseAndGetErrors(httpText);
+
+        assertTrue("Expected no errors for simple requestline, but got: " + errors,
+            errors.isEmpty());
+    }
+
+    /**
+     * Test Case 17: Simple requestline with header Expected: No errors
+     */
+    @Test
+    public void testValieSimpleRequestLineWithheader() {
+        String httpText
+            = "GET http://test.de HTTP/1.1\n"
+            + "content-type: application/json";
+
+        List<String> errors = parseAndGetErrors(httpText);
+
+        assertTrue("Expected no errors for simple requestline, but got: " + errors,
+            errors.isEmpty());
+    }
+
+    /**
+     * Test Case 18: requestline with header and empty body Expected: Error
+     * "Unknown HTTP header" (every request needs blank line before body)
+     */
+    @Test
+    public void testValieSimpleRequestLineWithheaderAndEmptyBody() {
+        String httpText
+            = "GET http://test.de HTTP/1.1\n"
+            + "content-type: application/json\n"
+            + "{}";
+
+        List<String> errors = parseAndGetErrors(httpText);
+
+        assertFalse("Expected at least one error for bare request without blank line before body",
+            errors.isEmpty());
+
+        boolean foundExpectedError = errors.stream()
+            .anyMatch(msg -> msg.contains("Unknown HTTP header"));
+
+        assertTrue("Expected error message 'Unknown HTTP header', but got: " + errors,
+            foundExpectedError);
+    }
+
+    /**
+     * Test Case 19: 2 requestBodies with seperator Expected: No Errors
+     */
+    @Test
+    public void testValieDoubleRequestBlocks() {
+        String httpText
+            = "### Request 1\n"
+            + "\n"
+            + "// POST request with json payload\n"
+            + "POST http://test.de HTTP/1.1\n"
+            + "content-type: application/json\n"
+            + "\n"
+            + "### Request 1\n"
+            + "\n"
+            + "GET http://test.de HTTP/1.1\n"
+            + "\n"
+            + "{\n"
+            + "    \"test\": \"13\"\n"
+            + "}";
+
+        List<String> errors = parseAndGetErrors(httpText);
+
+        assertTrue("Expected no errors for two requestBlocks with seperator, but got: " + errors,
+            errors.isEmpty());
+    }
+}

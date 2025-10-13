@@ -29,46 +29,124 @@ options {
 	tokenVocab = HTTPLexer;
 }
 
-httpRequestsFile: (blank | COMMENT)* firstRequest requestBlockWithSeparator* EOF;
+httpRequestsFile:
+    (blank | COMMENT)*
+    requestBlock?
+    ((blank | COMMENT)* REQUEST_SEPARATOR (blank | COMMENT)* requestBlock?)*
+    (blank | COMMENT)*
+    EOF;
 
-firstRequest:
-    separatorLine? (blank | COMMENT)* request (blank | COMMENT)*;
-
-requestBlockWithSeparator:
-    separatorLine (blank | COMMENT)* request (blank | COMMENT)*;
+requestBlock: request | invalidBodyWithoutRequest;
 
 request:
-    requestLine requestHeaders? ((NEWLINE NEWLINE requestBody)?
-	| (requestBody) { notifyErrorListeners("Unknown header"); _errHandler.recover(this, new
-    InputMismatchException(this)); });
+    requestLine requestHeaders? requestBodySection?
+    | requestLineWithBody;
 
-requestHeaders: (header NEWLINE?)+ header?;
+invalidBodyWithoutRequest:
+    {
+        notifyErrorListeners("Request body requires a request line");
+    }
+    (BODY_START_WITH_BLANK | BODY_START_NO_BLANK) jsonBodyContent;
 
-requestBody: (
-    OPEN_BLOCK_BRAKET NEWLINE* WS* (
-    fieldName COLON WS* fieldValue
-    )? NEWLINE* WS* CLOSE_BLOCK_BRAKET
-    );
+requestHeaders: (headerLine)+;
+
+headerLine:
+    header NEWLINE?
+    | invalidHeaderLine NEWLINE?;
+
+invalidHeaderLine:
+    {
+        // Only call error listener if there's actual content (not just a blank line)
+        getCurrentToken().getType() != NEWLINE
+    }?
+    {
+        notifyErrorListeners("Unknown HTTP header");
+    }
+    invalidHeaderContent;
+
+invalidHeaderContent: ~(NEWLINE | REQUEST_SEPARATOR | BODY_START_WITH_BLANK | BODY_START_NO_BLANK | COMMENT)+;
+
+requestBodySection:
+    (WS | NEWLINE | COMMENT)* requestBody;
+
+requestBody:
+    BODY_START_WITH_BLANK jsonBodyContent
+    | BODY_START_NO_BLANK jsonBodyContent;
+
+jsonBodyContent:
+    space (pair (space COMMA space pair)*)? space CLOSE_BLOCK_BRAKET
+    | {true}? ~REQUEST_SEPARATOR* CLOSE_BLOCK_BRAKET  // Catch-all: match anything until }
+    | {true}? ~REQUEST_SEPARATOR*;  // Last resort: match anything
+
+// Json structure for requestBody
+jsonObject:
+    OPEN_BLOCK_BRAKET space (pair (space COMMA space pair)*)? space
+    (CLOSE_BLOCK_BRAKET | { notifyErrorListeners("Missing closing bracket '}' in JSON object"); });
+
+pair:
+    jsonString space COLON space jsonValue;
+
+jsonArray:
+    OPEN_BRAKET space (jsonValue (space COMMA space jsonValue)*)? space
+    (CLOSE_BRAKET | { notifyErrorListeners("Missing closing bracket ']' in JSON array"); });
+
+jsonValue:
+    jsonString
+    | jsonNumber
+    | jsonObject
+    | jsonArray
+    | jsonBareWord;
+
+jsonString: STRING | QUOTE jsonStringContent? QUOTE;
+
+jsonStringContent: jsonStringChar+;
+
+jsonStringChar:
+    ALPHA_CHARS
+    | DIGITS
+    | DASH
+    | UNDERSCORE
+    | DOT
+    | SLASH
+    | COLON
+    | AMPERSAND
+    | PERCENT
+    | QUESTION_MARK
+    | HASH
+    | WS
+    | OPEN_BRAKET
+    | CLOSE_BRAKET
+    | OPEN_BLOCK_BRAKET
+    | CLOSE_BLOCK_BRAKET
+    | ASTERISK
+    | EQUAL
+    | SCHEME_SEPARATOR
+    | COMMA;
+
+jsonNumber: NUMBER;
+
+jsonBareWord: ALPHA_CHARS;
+
+space: (NEWLINE | WS)*;
 
 header: headerField;
 
 headerField: headerFieldName COLON WS* headerFieldValue;
 
 headerFieldName: (ALPHA_CHARS | DASH | UNDERSCORE)+;
-headerFieldValue: (~NEWLINE)*;
+headerFieldValue: (~(NEWLINE | BODY_START_WITH_BLANK | BODY_START_NO_BLANK))*;
 
 fieldName: QUOTE (ALPHA_CHARS | DASH | UNDERSCORE) QUOTE;
 
-fieldValue:
-    QUOTE* (ALPHA_CHARS | DASH | UNDERSCORE | DIGITS | SLASH)+ QUOTE* (
-    WS+ fieldValue
-    )?;
+fieldValue: QUOTE? (ALPHA_CHARS | DASH | UNDERSCORE | DIGITS | SLASH)+ QUOTE?;
 
 blank: NEWLINE | WS;
 
-separatorLine: REQUEST_SEPARATOR NEWLINE?;
+requestLine:
+    (METHOD WS)? requestTarget (WS httpVersion)? NEWLINE?;
 
-requestLine: (METHOD WS)? requestTarget (WS httpVersion)? NEWLINE?;
+requestLineWithBody:
+    (METHOD WS)? requestTarget (WS httpVersion)? BODY_START_WITH_BLANK jsonBodyContent;
 
 requestTarget: originForm | absoluteForm | asteriskForm;
 
@@ -76,7 +154,7 @@ originForm: slashPathPart (queryPart | fragmentPart)*;
 
 absolutePath: SLASH (pathSeparator segment)+;
 
-segment: (ALPHA_CHARS | DIGITS | DASH | UNDERSCORE)*;
+segment: (ALPHA_CHARS | DIGITS | DASH | UNDERSCORE)+;
 
 pathSeparator: SLASH WS+;
 
@@ -106,7 +184,7 @@ fullIPv6:
 
 compressedIPv6: (hextet (COLON hextet)*)? COLON COLON (
     hextet (COLON hextet)*
-	)?;
+    )?;
 
 hextet: hexa+;
 
@@ -129,7 +207,7 @@ queryContent:
     | COLON
     | AMPERSAND
     | PERCENT
-		| WS
+    | WS
     )+ queryContent?;
 
     fragmentPart: HASH fragmentContent;
@@ -141,9 +219,12 @@ fragmentContent: (
     | SLASH
     | COLON
     | PERCENT
-	)+;
+    )+;
 
-httpVersion: HTTP_PROTOCOL SLASH versionNumber; // HTTP/1.1
+httpVersion:
+    HTTP_PROTOCOL
+    (SLASH | { notifyErrorListeners("Missing '/' in HTTP version"); })
+    (versionNumber | { notifyErrorListeners("Invalid HTTP version number"); }); // HTTP/1.1
 
 versionNumber: DIGITS (DOT DIGITS)?;
 

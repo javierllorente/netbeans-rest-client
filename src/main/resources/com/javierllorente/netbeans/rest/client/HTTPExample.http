@@ -4,7 +4,46 @@
 POST https://google.de HTTP/1.1
 content-type: application/json
 
+# Test
 {
-    "name":"sample",
-    "time": "Wed, 21 Oct 2015 18:27:50 GMT"
+    "id":12,
+    "time": "Wed, 21 Oct 2015 18:27:50 GMT",
+    "path": "./test/test",
+    "urlstring": "https://google.de",
+    "commentstring": "//google.de",
+    "seperatorstring": "###google.de",
+    "methodstring": "GET",
+    "header": "content-type: application/json",
+    "array": ["1", 3, "foo", "bar", 2, "baz"],
+    "": 33,
+    "foo": {
+        "foo": 12,
+        "footer": {
+            "test": 12,
+            "bar": "asd",
+            "baz": "asd"
+        }
+    }
+}
+
+### Request 2
+
+GET http://test.de HTTP/1.2
+content-type: application/json
+
+{
+    "test": "12",
+    "": 12
+}
+
+
+### Request 2
+
+GET http://test.de HTTP/1.1
+
+{
+    "test": "13",
+    "test": {
+        "test": 12
+    }
 }
