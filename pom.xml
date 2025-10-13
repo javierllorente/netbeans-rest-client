@@ -10,7 +10,7 @@
     <url>https://github.com/javierllorente/netbeans-rest-client</url>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <netbeans.version>RELEASE240</netbeans.version>
+        <netbeans.version>RELEASE170</netbeans.version>
     </properties>
     <developers>
         <developer>
