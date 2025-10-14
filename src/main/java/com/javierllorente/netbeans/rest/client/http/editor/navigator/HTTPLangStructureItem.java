@@ -94,12 +94,16 @@ public class HTTPLangStructureItem implements StructureItem, ElementHandle {
 
     /**
      * Returns the text used for sorting structure items.
+     * Returns the position padded with zeros to ensure items are sorted
+     * in the order they appear in the file (top to bottom), not alphabetically.
      *
-     * @return The sort text.
+     * @return The sort text based on position.
      */
     @Override
     public String getSortText() {
-        return name;
+        // Use position with leading zeros for correct lexicographic sorting
+        // Max file size: 10 million characters = 8 digits
+        return String.format("%08d", startPosition);
     }
 
     /**
