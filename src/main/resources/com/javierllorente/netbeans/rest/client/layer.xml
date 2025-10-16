@@ -25,14 +25,14 @@
     <folder name="text">
       <folder name="x-http">
         <attr name="displayName" bundlevalue="com.javierllorente.netbeans.rest.client.Bundle#Editors/text/x-http"/>
-        
-<!--        <folder name="CSL">
-          <file name="FIELD.instance">
-            <attr name="default" stringvalue="field"/>
-            <attr name="displayName" stringvalue="HTTP Field" />
-            <attr name="foregroundColor" stringvalue="#FFA500" /> 
+
+        <folder name="SideBar">
+          <file name="com-javierllorente-netbeans-rest-client-http-editor-sidebar-RunHttpRequestsSideBarFactory.instance">
+            <attr name="position" intvalue="1300"/>
+            <attr name="location" stringvalue="West"/>
+            <attr name="scrollable" boolvalue="true"/>
           </file>
-        </folder>-->
+        </folder>
 
         <folder name="FontsColors">
           <folder name="NetBeans">
