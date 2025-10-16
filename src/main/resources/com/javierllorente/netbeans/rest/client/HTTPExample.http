@@ -31,12 +31,6 @@ content-type: application/json
 GET http://test.de HTTP/1.2
 content-type: application/json
 
-{
-    "test": "12",
-    "": 12
-}
-
-
 ### Request 2
 
 GET http://test.de HTTP/1.1
