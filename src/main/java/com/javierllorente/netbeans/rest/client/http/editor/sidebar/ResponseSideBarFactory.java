@@ -20,18 +20,23 @@
  */
 package com.javierllorente.netbeans.rest.client.http.editor.sidebar;
 
-import com.javierllorente.netbeans.rest.client.http.editor.sidebar.request.RequestProcessor;
 import javax.swing.JComponent;
 import javax.swing.text.JTextComponent;
-import javax.swing.text.StyledDocument;
 import org.netbeans.spi.editor.SideBarFactory;
 
-public class RunHttpRequestsSideBarFactory implements SideBarFactory {
+/**
+ * Factory for creating the east sidebar that displays HTTP responses.
+ *
+ * @author Christian Lenz
+ */
+public class ResponseSideBarFactory implements SideBarFactory {
 
     @Override
     public JComponent createSideBar(JTextComponent target) {
-        RequestProcessor processor = new RequestProcessor((StyledDocument) target.getDocument());
-        processor.setTextComponent(target);
-        return new RunHttpRequestsSideBarPanel(target, processor);
+        ResponseSidebarPanel panel = new ResponseSidebarPanel(target);
+
+        ResponseSidebarManager.getInstance().registerSidebar(target, panel);
+
+        return panel;
     }
 }

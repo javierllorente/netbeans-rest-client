@@ -133,7 +133,7 @@ public class DrawingPanel extends JPanel {
                 int[] xPoints = {4, 10, 4};
                 int[] yPoints = {(int) rect.getY(), (int) rect.getY() + 7, (int) rect.getY() + 14};
                 g2.fillPolygon(xPoints, yPoints, 3);
-                taskAreas.add(new Rectangle2D.Float(4, (int) rect.getY(), 6, 14));
+                taskAreas.add(new Rectangle2D.Float(4, (float) rect.getY(), 6, 14));
             }
         }
     }

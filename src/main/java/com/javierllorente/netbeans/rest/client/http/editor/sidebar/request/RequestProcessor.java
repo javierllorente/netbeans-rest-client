@@ -21,12 +21,14 @@
 package com.javierllorente.netbeans.rest.client.http.editor.sidebar.request;
 
 import com.javierllorente.netbeans.rest.client.RestClient;
+import com.javierllorente.netbeans.rest.client.http.editor.sidebar.ResponseSidebarManager;
 import com.javierllorente.netbeans.rest.client.http.editor.syntax.antlr.HTTPLexer;
 import com.javierllorente.netbeans.rest.client.http.editor.syntax.antlr.HTTPParser;
 import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.core.MultivaluedMap;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.text.JTextComponent;
 import javax.swing.text.StyledDocument;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -39,14 +41,23 @@ import org.openide.text.NbDocument;
 public class RequestProcessor implements IRequestProcessor {
 
     public final List<Request> currentRequests;
-    private StyledDocument document;
-    private RestClient restClient;
+    private final StyledDocument document;
+    private final RestClient restClient;
+    private JTextComponent textComponent;
 
     public RequestProcessor(StyledDocument document) {
         this.currentRequests = new ArrayList<>();
         this.document = document;
 
         this.restClient = new RestClient();
+    }
+
+    /**
+     * Set the text component for this processor. This is used to show responses
+     * in the sidebar.
+     */
+    public void setTextComponent(javax.swing.text.JTextComponent textComponent) {
+        this.textComponent = textComponent;
     }
 
     @Override
@@ -114,7 +125,21 @@ public class RequestProcessor implements IRequestProcessor {
             return;
         }
 
-        this.restClient.request(requestTarget.getText(), method);
+        String response = this.restClient.request(requestTarget.getText(), method);
+
+        // Show response in sidebar if textComponent is available
+        if (textComponent != null && response != null) {
+            String contentType = "";
+            var responseHeaders = this.restClient.getResponseHeaders();
+
+            if (responseHeaders != null && responseHeaders.containsKey("content-type")
+                && !responseHeaders.get("content-type").isEmpty()) {
+                contentType = (String) responseHeaders.get("content-type").get(0);
+            }
+
+            // Pass headers to sidebar
+            ResponseSidebarManager.getInstance().showResponse(textComponent, response, contentType, responseHeaders);
+        }
     }
 
     @Override

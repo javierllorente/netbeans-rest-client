@@ -32,6 +32,11 @@
             <attr name="location" stringvalue="West"/>
             <attr name="scrollable" boolvalue="true"/>
           </file>
+          <file name="com-javierllorente-netbeans-rest-client-http-editor-sidebar-ResponseSideBarFactory.instance">
+            <attr name="position" intvalue="1400"/>
+            <attr name="location" stringvalue="East"/>
+            <attr name="scrollable" boolvalue="false"/>
+          </file>
         </folder>
 
         <folder name="FontsColors">

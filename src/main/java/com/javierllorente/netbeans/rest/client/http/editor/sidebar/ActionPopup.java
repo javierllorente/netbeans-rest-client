@@ -28,7 +28,6 @@ import javax.swing.Icon;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import org.openide.util.ImageUtilities;
-import org.openide.util.RequestProcessor;
 
 /**
  * Popup menu for running and debugging tasks.
@@ -36,7 +35,6 @@ import org.openide.util.RequestProcessor;
 public class ActionPopup {
 
     private final IRequestProcessor requestProcessor;
-    private static final RequestProcessor RP = new RequestProcessor("RequestProcessor", 1, true);
 
     public ActionPopup(IRequestProcessor requestProcessor) {
         this.requestProcessor = requestProcessor;
@@ -44,24 +42,16 @@ public class ActionPopup {
 
     public JPopupMenu createPopupMenu(Request request) {
         Icon runIcon = ImageUtilities.loadImageIcon("org/netbeans/modules/project/ui/resources/runProject.png", false);
-//        Icon debugIcon = ImageUtilities.loadImageIcon("org/netbeans/modules/debugger/resources/debugProject.png", false);
 
         JPopupMenu popupMenu = new JPopupMenu();
         JMenuItem runItem = new JMenuItem("Call '" + request.getRequestLineText(), runIcon);
-//        JMenuItem debugItem = new JMenuItem("Debug '" + request.getName() + "' task", debugIcon);
 
-        // Verwende executeItem für die Ausführung von "Run" und "Debug"
         runItem.addActionListener((ActionEvent e) -> {
             System.out.println("Call " + request.getRequestLineText());
             executeItem(requestProcessor, request.getrequestContext(), false);  // Run task
         });
 
-//        debugItem.addActionListener((ActionEvent e) -> {
-//            System.out.println("Debugging task: " + task.getName());
-//            executeItem(requestProcessor, task.getName(), true);  // Debug task
-//        });
         popupMenu.add(runItem);
-//        popupMenu.add(debugItem);
 
         return popupMenu;
     }
