@@ -113,19 +113,13 @@ public class RequestProcessor implements IRequestProcessor {
         this.restClient.setHeaders(getHeaders(requestContext.requestHeaders()));
         this.restClient.setBody(getBody(requestContext.requestBodySection()));
 
-        var method = requestLine.METHOD().getText();
-
-        if (method == null || method.isEmpty()) {
-            method = "GET";
-        }
-
         HTTPParser.RequestTargetContext requestTarget = requestLine.requestTarget();
 
         if (requestTarget == null) {
             return;
         }
 
-        String response = this.restClient.request(requestTarget.getText(), method);
+        String response = this.restClient.request(requestTarget.getText(), requestLine.METHOD() == null ? "GET" : requestLine.METHOD().getText());
 
         // Show response in sidebar if textComponent is available
         if (textComponent != null && response != null) {

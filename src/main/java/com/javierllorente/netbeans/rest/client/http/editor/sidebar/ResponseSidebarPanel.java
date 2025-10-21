@@ -20,35 +20,20 @@
  */
 package com.javierllorente.netbeans.rest.client.http.editor.sidebar;
 
-import com.javierllorente.netbeans.rest.client.Utils;
-import com.javierllorente.netbeans.rest.client.editor.RestMediaType;
-import com.javierllorente.netbeans.rest.client.ui.LineNumberComponent;
-import jakarta.json.Json;
-import jakarta.json.JsonReader;
-import jakarta.ws.rs.core.MediaType;
+import com.javierllorente.netbeans.rest.client.ui.ResponsePanel;
 import jakarta.ws.rs.core.MultivaluedMap;
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
-import java.io.File;
-import java.io.IOException;
-import java.io.StringReader;
-import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
-import javax.swing.JEditorPane;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 import javax.swing.text.JTextComponent;
-import org.openide.text.CloneableEditorSupport;
 
 /**
  * Sidebar panel for displaying HTTP response content.
@@ -57,14 +42,8 @@ import org.openide.text.CloneableEditorSupport;
  */
 public class ResponseSidebarPanel extends JPanel {
 
-    private final JEditorPane responseEditor;
+    private final ResponsePanel responsePanel;
     private final JTextComponent textComponent;
-    private final LineNumberComponent lineNumberComponent;
-    private final JButton htmlRenderButton;
-    private final JButton headersButton;
-    private String mimePath = MediaType.TEXT_PLAIN;
-    private String response;
-    private MultivaluedMap<String, Object> responseHeaders;
     private boolean visible;
     private int calculatedWidth = -1; // Cache the width once calculated
 
@@ -85,25 +64,6 @@ public class ResponseSidebarPanel extends JPanel {
         titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD));
         titlePanel.add(titleLabel);
 
-        // Center panel with action buttons
-        JPanel centerButtonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 3, 0));
-        centerButtonPanel.setBackground(new Color(240, 240, 240));
-
-        // HTML Render button
-        htmlRenderButton = new JButton("Render HTML");
-        htmlRenderButton.setFont(htmlRenderButton.getFont().deriveFont(10f));
-        htmlRenderButton.setToolTipText("Open HTML response in browser");
-        htmlRenderButton.setVisible(false); // Initially hidden, shown only for HTML responses
-        htmlRenderButton.addActionListener(e -> renderHtml());
-        centerButtonPanel.add(htmlRenderButton);
-
-        // Headers button
-        headersButton = new JButton("Headers");
-        headersButton.setFont(headersButton.getFont().deriveFont(10f));
-        headersButton.setToolTipText("Show response headers");
-        headersButton.addActionListener(e -> showHeaders());
-        centerButtonPanel.add(headersButton);
-
         // Close button (simple X)
         JButton closeButton = new JButton("\u00D7");
         closeButton.setFont(closeButton.getFont().deriveFont(Font.BOLD, 16f));
@@ -119,28 +79,13 @@ public class ResponseSidebarPanel extends JPanel {
         });
 
         headerPanel.add(titlePanel, BorderLayout.WEST);
-        headerPanel.add(centerButtonPanel, BorderLayout.CENTER);
         headerPanel.add(closeButton, BorderLayout.EAST);
 
-        // Create readonly editor pane with syntax highlighting
-        responseEditor = new JEditorPane();
-        responseEditor.setEditable(false);
-        responseEditor.setCursor(new java.awt.Cursor(java.awt.Cursor.TEXT_CURSOR));
-        responseEditor.setAutoscrolls(true);
-        responseEditor.setEditorKit(CloneableEditorSupport.getEditorKit(mimePath));
-
-        JScrollPane scrollPane = new JScrollPane();
-        scrollPane.setViewportView(responseEditor);
-        // Don't set fixed size here - let setVisible() handle it dynamically
-
-        // Add line numbers
-        lineNumberComponent = new LineNumberComponent(responseEditor);
-        scrollPane.getVerticalScrollBar().addAdjustmentListener(e -> lineNumberComponent.repaint());
-        scrollPane.getHorizontalScrollBar().addAdjustmentListener(e -> lineNumberComponent.repaint());
-        scrollPane.setRowHeaderView(lineNumberComponent);
+        // Use the ResponsePanel component which already has all the functionality
+        responsePanel = new ResponsePanel();
 
         add(headerPanel, BorderLayout.NORTH);
-        add(scrollPane, BorderLayout.CENTER);
+        add(responsePanel, BorderLayout.CENTER);
 
         // Initially hidden
         setPreferredSize(new Dimension(0, 0));
@@ -151,89 +96,27 @@ public class ResponseSidebarPanel extends JPanel {
      * to NetBeans MIME types like ResponsePanel does.
      */
     public void setContentType(String contentType) {
-        if (contentType == null || contentType.isEmpty()) {
-            mimePath = MediaType.TEXT_PLAIN;
-        } else if (contentType.startsWith(MediaType.APPLICATION_XML)) {
-            mimePath = RestMediaType.XML;
-        } else if (contentType.startsWith(MediaType.APPLICATION_JSON)
-            || contentType.startsWith("application/javascript")) {
-            mimePath = RestMediaType.JSON;
-        } else if (contentType.startsWith(MediaType.TEXT_HTML)) {
-            mimePath = MediaType.TEXT_HTML;
-        } else {
-            mimePath = MediaType.TEXT_PLAIN;
-        }
-        responseEditor.setEditorKit(CloneableEditorSupport.getEditorKit(mimePath));
-
-        // Show HTML render button only for HTML responses
-        htmlRenderButton.setVisible(mimePath.equals(MediaType.TEXT_HTML));
+        responsePanel.setContentType(contentType);
     }
 
     /**
      * Set response headers for display.
      */
     public void setResponseHeaders(MultivaluedMap<String, Object> headers) {
-        this.responseHeaders = headers;
+        if (headers != null) {
+            for (Map.Entry<String, List<Object>> entry : headers.entrySet()) {
+                String key = entry.getKey();
+                String val = entry.getValue().toString();
+                responsePanel.addHeader(key, val);
+            }
+        }
     }
 
     /**
      * Set the response content (raw).
      */
     public void setResponse(String response) {
-        this.response = response;
-    }
-
-    /**
-     * Format the response based on MIME type with pretty printing.
-     */
-    private String formatResponse() {
-        String prettyResponse = response;
-        if (response != null && !response.isEmpty()) {
-            try {
-                switch (mimePath) {
-                    case RestMediaType.JSON:
-                        try (JsonReader jsonReader = Json.createReader(new StringReader(prettyResponse))) {
-                            prettyResponse = Utils.jsonPrettyFormat(jsonReader.read());
-                        }
-                        break;
-                    case RestMediaType.XML:
-                        prettyResponse = Utils.xmlPrettyFormat(prettyResponse);
-                        break;
-                    case MediaType.TEXT_HTML:
-                        prettyResponse = Utils.htmlPrettyFormat(prettyResponse);
-                        break;
-                }
-            } catch (Exception e) {
-                // Keep original response if formatting fails
-                System.err.println("Failed to format response: " + e.getMessage());
-            }
-        }
-
-        lineNumberComponent.repaint();
-        return prettyResponse;
-    }
-
-    /**
-     * Show the formatted response in the editor.
-     */
-    private void showFormattedResponse() {
-        if (responseEditor == null) {
-            return;
-        }
-
-        try {
-            String formatted = formatResponse();
-            responseEditor.setText(formatted != null ? formatted : "");
-            responseEditor.setCaretPosition(0);
-        } catch (Exception e) {
-            System.err.println("Error showing response: " + e.getMessage());
-            try {
-                responseEditor.setText(response != null ? response : "No response");
-                responseEditor.setCaretPosition(0);
-            } catch (Exception ex) {
-                // Ignore
-            }
-        }
+        responsePanel.setResponse(response);
     }
 
     @Override
@@ -293,10 +176,11 @@ public class ResponseSidebarPanel extends JPanel {
      */
     public void showResponse(String response, String contentType, MultivaluedMap<String, Object> headers) {
         try {
+            responsePanel.clear();
             setContentType(contentType);
             setResponse(response);
             setResponseHeaders(headers);
-            showFormattedResponse();
+            responsePanel.showResponse();
             setVisible(true);
             revalidate();
             repaint();
@@ -304,62 +188,5 @@ public class ResponseSidebarPanel extends JPanel {
             System.err.println("Error showing response: " + e.getMessage());
             e.printStackTrace();
         }
-    }
-
-    /**
-     * Render HTML response in system browser.
-     */
-    private void renderHtml() {
-        if (response == null || response.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "No HTML content to render", "Info", JOptionPane.INFORMATION_MESSAGE);
-            return;
-        }
-
-        try {
-            // Create temporary HTML file
-            File tempFile = File.createTempFile("rest-response-", ".html");
-            tempFile.deleteOnExit();
-            Files.writeString(tempFile.toPath(), response);
-
-            // Open in default browser
-            if (Desktop.isDesktopSupported()) {
-                Desktop.getDesktop().browse(tempFile.toURI());
-            } else {
-                JOptionPane.showMessageDialog(this, "Desktop not supported - cannot open browser", "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        } catch (IOException ex) {
-            JOptionPane.showMessageDialog(this, "Failed to render HTML: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    /**
-     * Show response headers in a dialog.
-     */
-    private void showHeaders() {
-        if (responseHeaders == null || responseHeaders.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "No response headers available", "Info", JOptionPane.INFORMATION_MESSAGE);
-            return;
-        }
-
-        // Build headers text
-        StringBuilder headersText = new StringBuilder();
-        headersText.append("Response Headers:\n\n");
-        for (Map.Entry<String, List<Object>> entry : responseHeaders.entrySet()) {
-            String key = entry.getKey();
-            String value = entry.getValue().toString();
-            // Remove brackets from value list
-            value = value.substring(1, value.length() - 1);
-            headersText.append(key).append(": ").append(value).append("\n");
-        }
-
-        // Show in scrollable text area dialog
-        JTextArea textArea = new javax.swing.JTextArea(headersText.toString());
-        textArea.setEditable(false);
-        textArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
-        textArea.setRows(15);
-        textArea.setColumns(50);
-
-        JScrollPane scrollPane = new JScrollPane(textArea);
-        JOptionPane.showMessageDialog(this, scrollPane, "Response Headers", JOptionPane.INFORMATION_MESSAGE);
     }
 }

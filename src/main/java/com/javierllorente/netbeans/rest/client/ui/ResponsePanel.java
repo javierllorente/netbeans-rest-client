@@ -21,13 +21,19 @@ import jakarta.json.Json;
 import jakarta.json.JsonReader;
 import jakarta.ws.rs.core.MediaType;
 import java.awt.BorderLayout;
+import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.io.File;
+import java.io.IOException;
 import java.io.StringReader;
+import java.nio.file.Files;
 import javax.swing.ButtonGroup;
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JEditorPane;
 import javax.swing.JLayer;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
@@ -46,6 +52,7 @@ public class ResponsePanel extends JPanel {
     private final TablePanel responseHeadersTable;
     private final StatusLabel statusLabel;
     private final LineNumberComponent lineNumberComponent;
+    private final JButton previewButton;
     private String mimePath = MediaType.TEXT_PLAIN;
     private String response;
 
@@ -76,6 +83,14 @@ public class ResponsePanel extends JPanel {
         formatGroup.add(rawButton);
         topPanel.add(prettyButton);
         topPanel.add(rawButton);
+
+        previewButton = new JButton("Preview");
+        previewButton.setToolTipText("Open HTML response in browser");
+        previewButton.setVisible(false); // Initially hidden, shown only for HTML responses
+        previewButton.addActionListener((ae) -> {
+            renderHtml();
+        });
+        topPanel.add(previewButton);
 
         responseScrollPane = new JScrollPane();
 
@@ -114,6 +129,9 @@ public class ResponsePanel extends JPanel {
             mimePath = MediaType.TEXT_HTML;
         }
         responseEditorPane.setEditorKit(CloneableEditorSupport.getEditorKit(mimePath));
+
+        // Show Preview button only for HTML responses
+        previewButton.setVisible(mimePath.equals(MediaType.TEXT_HTML));
     }
 
     public void setResponse(String response) {
@@ -147,6 +165,32 @@ public class ResponsePanel extends JPanel {
         String prettyOrNotResponse = formatResponse();
         responseEditorPane.setText(prettyOrNotResponse);
         responseEditorPane.setCaretPosition(0);
+    }
+
+    /**
+     * Render HTML response in system browser.
+     */
+    private void renderHtml() {
+        if (response == null || response.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No HTML content to render", "Info", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        try {
+            // Create temporary HTML file
+            File tempFile = File.createTempFile("rest-response-", ".html");
+            tempFile.deleteOnExit();
+            Files.writeString(tempFile.toPath(), response);
+
+            // Open in default browser
+            if (Desktop.isDesktopSupported()) {
+                Desktop.getDesktop().browse(tempFile.toURI());
+            } else {
+                JOptionPane.showMessageDialog(this, "Desktop not supported - cannot open browser", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this, "Failed to render HTML: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     public void clearResponse() {
