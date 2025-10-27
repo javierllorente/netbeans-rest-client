@@ -1,3 +1,5 @@
+https://jsonplaceholder.typicode.com/todos/1
+
 ### Request 1
 
 // POST request with json payload
@@ -31,15 +33,9 @@ content-type: application/json
 GET http://test.de HTTP/1.2
 content-type: application/json
 
-{
-    "test": "12",
-    "": 12
-}
-
-
 ### Request 2
 
-GET http://test.de HTTP/1.1
+GET http://google.de HTTP/1.1
 
 {
     "test": "13",
