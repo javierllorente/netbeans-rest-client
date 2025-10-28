@@ -599,4 +599,49 @@ public class HTTPParserTest {
         assertTrue("Expected no errors for two requestBlocks with seperator, but got: " + errors,
             errors.isEmpty());
     }
+
+    /**
+     * Test Case 20: URL without method, headers or body (bare URL)
+     * Expected: No errors
+     */
+    @Test
+    public void testBareUrl() {
+        String httpText = "https://jsonplaceholder.typicode.com/todos/1";
+
+        List<String> errors = parseAndGetErrors(httpText);
+
+        assertTrue("Expected no errors for bare URL, but got: " + errors,
+            errors.isEmpty());
+    }
+
+    /**
+     * Test Case 21: URL without method, headers or body with newline
+     * Expected: No errors
+     */
+    @Test
+    public void testBareUrlWithNewline() {
+        String httpText = "https://jsonplaceholder.typicode.com/todos/1\n";
+
+        List<String> errors = parseAndGetErrors(httpText);
+
+        assertTrue("Expected no errors for bare URL with newline, but got: " + errors,
+            errors.isEmpty());
+    }
+
+    /**
+     * Test Case 22: Multiple bare URLs separated by request separator
+     * Expected: No errors
+     */
+    @Test
+    public void testMultipleBareUrls() {
+        String httpText
+            = "https://jsonplaceholder.typicode.com/todos/1\n"
+            + "###\n"
+            + "https://jsonplaceholder.typicode.com/todos/2";
+
+        List<String> errors = parseAndGetErrors(httpText);
+
+        assertTrue("Expected no errors for multiple bare URLs, but got: " + errors,
+            errors.isEmpty());
+    }
 }

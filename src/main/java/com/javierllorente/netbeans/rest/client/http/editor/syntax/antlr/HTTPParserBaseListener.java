@@ -53,18 +53,6 @@ public class HTTPParserBaseListener implements HTTPParserListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterInvalidBodyWithoutRequest(HTTPParser.InvalidBodyWithoutRequestContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitInvalidBodyWithoutRequest(HTTPParser.InvalidBodyWithoutRequestContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
 	@Override public void enterRequestHeaders(HTTPParser.RequestHeadersContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -84,6 +72,18 @@ public class HTTPParserBaseListener implements HTTPParserListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitHeaderLine(HTTPParser.HeaderLineContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterInvalidBodyWithoutRequest(HTTPParser.InvalidBodyWithoutRequestContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitInvalidBodyWithoutRequest(HTTPParser.InvalidBodyWithoutRequestContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
