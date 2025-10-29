@@ -42,29 +42,27 @@ request:
     requestLine requestHeaders? requestBodySection?
     | requestLineWithBody;
 
+requestHeaders: {_input.LA(1) == ALPHA_CHARS}? (headerLine)+;
+
+headerLine:
+    header NEWLINE?
+    | invalidHeaderLine;
+
 invalidBodyWithoutRequest:
     {
         notifyErrorListeners("Request body requires a request line");
     }
     (BODY_START_WITH_BLANK | BODY_START_NO_BLANK) jsonBodyContent;
 
-requestHeaders: (headerLine)+;
-
-headerLine:
-    header NEWLINE?
-    | invalidHeaderLine NEWLINE?;
-
 invalidHeaderLine:
-    {
-        // Only call error listener if there's actual content (not just a blank line)
-        getCurrentToken().getType() != NEWLINE
-    }?
+    {_input.LA(2) != COLON}?
+    invalidHeaderContent
     {
         notifyErrorListeners("Unknown HTTP header");
     }
-    invalidHeaderContent;
+    NEWLINE?;
 
-invalidHeaderContent: ~(NEWLINE | REQUEST_SEPARATOR | BODY_START_WITH_BLANK | BODY_START_NO_BLANK | COMMENT)+;
+invalidHeaderContent: ~(NEWLINE | REQUEST_SEPARATOR | BODY_START_WITH_BLANK | BODY_START_NO_BLANK | COMMENT | EOF | WS)+;
 
 requestBodySection:
     (WS | NEWLINE | COMMENT)* requestBody;
@@ -190,9 +188,9 @@ hextet: hexa+;
 
 hexa: (DIGITS | ALPHA_CHARS)+;
 
-slashPathPart: SLASH pathSegment? SLASH? (slashPathPart)?;
+slashPathPart: SLASH (pathSegment (SLASH pathSegment)* SLASH?)?;
 
-pathSegment: ((ALPHA_CHARS | DIGITS) (DOT ALPHA_CHARS | DIGITS)*);
+pathSegment: (ALPHA_CHARS | DIGITS) (DOT | DASH | UNDERSCORE | ALPHA_CHARS | DIGITS)*;
 
 asteriskForm: ASTERISK;
 

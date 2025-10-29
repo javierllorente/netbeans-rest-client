@@ -38,16 +38,6 @@ public interface HTTPParserListener extends ParseTreeListener {
 	 */
 	void exitRequest(HTTPParser.RequestContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link HTTPParser#invalidBodyWithoutRequest}.
-	 * @param ctx the parse tree
-	 */
-	void enterInvalidBodyWithoutRequest(HTTPParser.InvalidBodyWithoutRequestContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link HTTPParser#invalidBodyWithoutRequest}.
-	 * @param ctx the parse tree
-	 */
-	void exitInvalidBodyWithoutRequest(HTTPParser.InvalidBodyWithoutRequestContext ctx);
-	/**
 	 * Enter a parse tree produced by {@link HTTPParser#requestHeaders}.
 	 * @param ctx the parse tree
 	 */
@@ -67,6 +57,16 @@ public interface HTTPParserListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitHeaderLine(HTTPParser.HeaderLineContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link HTTPParser#invalidBodyWithoutRequest}.
+	 * @param ctx the parse tree
+	 */
+	void enterInvalidBodyWithoutRequest(HTTPParser.InvalidBodyWithoutRequestContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link HTTPParser#invalidBodyWithoutRequest}.
+	 * @param ctx the parse tree
+	 */
+	void exitInvalidBodyWithoutRequest(HTTPParser.InvalidBodyWithoutRequestContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link HTTPParser#invalidHeaderLine}.
 	 * @param ctx the parse tree
