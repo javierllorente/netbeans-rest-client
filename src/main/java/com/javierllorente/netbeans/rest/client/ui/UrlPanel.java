@@ -41,6 +41,10 @@ public class UrlPanel extends javax.swing.JPanel {
     public void setUrl(String url) {
         urlTextField.setText(url);
     }
+    
+    public void moveCaretToEnd() {
+        urlTextField.setCaretPosition(urlTextField.getText().length());
+    }
 
     public String getDisplayUrl() {
         String url = urlTextField.getText();
