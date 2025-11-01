@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 Javier Llorente <javier@opensuse.org>.
+ * Copyright 2022-2025 Javier Llorente <javier@opensuse.org>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -309,9 +309,18 @@ public class RestClientTopComponent extends TopComponent {
             client.setBodyType(bodyPanel.getBodyType());
 
             try {
-                String url = urlPanel.getUrl();            
-                if (!url.startsWith("http")) {
-                    url = "http://" + urlPanel.getUrl();
+                String url = urlPanel.getUrl();
+                if (url.matches("^[a-zA-Z]+://.*")) {
+                    if (!(url.startsWith("http://") || url.startsWith("https://"))) {
+                        logger.log(Level.WARNING, "Unsupported protocol. URL = {0}", url);
+                        responsePanel.setResponse("Unsupported protocol");
+                        responsePanel.showResponse();
+                        return;
+                    }
+                } else {
+                    urlPanel.setUrl("http://" + url);
+                    urlPanel.moveCaretToEnd();
+                    url = urlPanel.getUrl();
                 }
                 String response = client.request(url, urlPanel.getRequestMethod());
                 MultivaluedMap<String, Object> responseHeaders = client.getResponseHeaders();
