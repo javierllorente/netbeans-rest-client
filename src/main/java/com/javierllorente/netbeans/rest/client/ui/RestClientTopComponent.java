@@ -310,14 +310,7 @@ public class RestClientTopComponent extends TopComponent {
 
             try {
                 String url = urlPanel.getUrl();
-                if (url.matches("^[a-zA-Z]+://.*")) {
-                    if (!(url.startsWith("http://") || url.startsWith("https://"))) {
-                        logger.log(Level.WARNING, "Unsupported protocol. URL = {0}", url);
-                        responsePanel.setResponse("Unsupported protocol");
-                        responsePanel.showResponse();
-                        return;
-                    }
-                } else {
+                if (!url.matches("^[a-zA-Z]+://.*")) {
                     urlPanel.setUrl("http://" + url);
                     urlPanel.moveCaretToEnd();
                     url = urlPanel.getUrl();

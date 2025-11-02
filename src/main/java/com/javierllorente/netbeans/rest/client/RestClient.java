@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 Javier Llorente <javier@opensuse.org>.
+ * Copyright 2022-2025 Javier Llorente <javier@opensuse.org>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -170,6 +170,10 @@ public class RestClient {
 
     public String request(String resource, String method)
             throws ClientErrorException, ServerErrorException, ProcessingException {
+        if (resource.matches("^[a-zA-Z]+://.*")
+                && !(resource.startsWith("http://") || resource.startsWith("https://"))) {
+            throw new ProcessingException("Unsupported protocol");
+        }
         long startTime = System.currentTimeMillis();
         WebTarget target = client.target(resource);
 
