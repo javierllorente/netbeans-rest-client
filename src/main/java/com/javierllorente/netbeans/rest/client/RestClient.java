@@ -173,6 +173,8 @@ public class RestClient {
         if (resource.matches("^[a-zA-Z]+://.*")
                 && !(resource.startsWith("http://") || resource.startsWith("https://"))) {
             throw new ProcessingException("Unsupported protocol");
+        } else {
+            resource = "http://" + resource;
         }
         long startTime = System.currentTimeMillis();
         WebTarget target = client.target(resource);

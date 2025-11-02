@@ -313,11 +313,10 @@ public class RestClientTopComponent extends TopComponent {
                 if (!url.matches("^[a-zA-Z]+://.*")) {
                     urlPanel.setUrl("http://" + url);
                     urlPanel.moveCaretToEnd();
-                    url = urlPanel.getUrl();
                 }
                 String response = client.request(url, urlPanel.getRequestMethod());
                 MultivaluedMap<String, Object> responseHeaders = client.getResponseHeaders();
-                updateResponsePanel(response, responseHeaders);  
+                updateResponsePanel(response, responseHeaders);
             } catch (ProcessingException ex) {
                 logger.warning(ex.getMessage());
                 String response = (ex.getMessage().contains("PKIX path building failed"))
