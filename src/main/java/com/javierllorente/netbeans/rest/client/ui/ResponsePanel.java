@@ -120,6 +120,7 @@ public class ResponsePanel extends JPanel {
     }
 
     public void setContentType(String contentType) {
+        mimePath = MediaType.TEXT_PLAIN;
         if (contentType.startsWith(MediaType.APPLICATION_XML)) {
             mimePath = RestMediaType.XML;
         } else if (contentType.startsWith(MediaType.APPLICATION_JSON)
