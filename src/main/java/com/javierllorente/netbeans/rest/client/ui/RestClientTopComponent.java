@@ -310,11 +310,9 @@ public class RestClientTopComponent extends TopComponent {
 
             try {
                 String url = urlPanel.getUrl();
-                if (!url.matches("^[a-zA-Z]+://.*")) {
-                    urlPanel.setUrl("http://" + url);
-                    urlPanel.moveCaretToEnd();
-                }
                 String response = client.request(url, urlPanel.getRequestMethod());
+                setUrl(client.getUri());
+                urlPanel.moveCaretToEnd();
                 MultivaluedMap<String, Object> responseHeaders = client.getResponseHeaders();
                 updateResponsePanel(response, responseHeaders);
             } catch (ProcessingException ex) {

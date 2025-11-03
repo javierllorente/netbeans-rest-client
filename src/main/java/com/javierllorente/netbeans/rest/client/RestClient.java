@@ -64,6 +64,7 @@ public class RestClient {
     private String authType;
     private String username;
     private String password;
+    private String uri;
     private MultivaluedMap<String, String> headers;
     private String body;
     private String bodyType;
@@ -170,12 +171,14 @@ public class RestClient {
 
     public String request(String resource, String method)
             throws ClientErrorException, ServerErrorException, ProcessingException {
-        if (resource.matches("^[a-zA-Z]+://.*")
-                && !(resource.startsWith("http://") || resource.startsWith("https://"))) {
-            throw new ProcessingException("Unsupported protocol");
+        if (resource.matches("^[a-zA-Z]+://.*")) {
+            if (!(resource.startsWith("http://") || resource.startsWith("https://"))) {
+                throw new ProcessingException("Unsupported protocol");
+            }
         } else {
             resource = "http://" + resource;
         }
+        uri = resource;
         long startTime = System.currentTimeMillis();
         WebTarget target = client.target(resource);
 
@@ -273,6 +276,10 @@ public class RestClient {
         }
 
         return mediaType;
+    }
+    
+    public String getUri() {
+        return uri;
     }
 
 }
