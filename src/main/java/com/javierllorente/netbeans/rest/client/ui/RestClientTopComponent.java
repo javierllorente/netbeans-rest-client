@@ -322,8 +322,11 @@ public class RestClientTopComponent extends TopComponent {
                         + "SSL certificate verification is enabled. "
                         + "You may disable it under Tools->Options->Miscellaneous->REST Client"
                         : ex.getMessage();
-                responsePanel.setResponse(response);
-                responsePanel.showResponse();
+                SwingUtilities.invokeLater(() -> {
+                    responsePanel.setContentType("");
+                    responsePanel.setResponse(response);
+                    responsePanel.showResponse();
+                });
             } finally {
                 progressHandle.finish();
                 setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
