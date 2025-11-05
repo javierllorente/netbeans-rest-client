@@ -518,6 +518,36 @@ public interface HTTPParserListener extends ParseTreeListener {
 	 */
 	void exitQueryContent(HTTPParser.QueryContentContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link HTTPParser#queryParam}.
+	 * @param ctx the parse tree
+	 */
+	void enterQueryParam(HTTPParser.QueryParamContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link HTTPParser#queryParam}.
+	 * @param ctx the parse tree
+	 */
+	void exitQueryParam(HTTPParser.QueryParamContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link HTTPParser#queryKey}.
+	 * @param ctx the parse tree
+	 */
+	void enterQueryKey(HTTPParser.QueryKeyContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link HTTPParser#queryKey}.
+	 * @param ctx the parse tree
+	 */
+	void exitQueryKey(HTTPParser.QueryKeyContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link HTTPParser#queryValue}.
+	 * @param ctx the parse tree
+	 */
+	void enterQueryValue(HTTPParser.QueryValueContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link HTTPParser#queryValue}.
+	 * @param ctx the parse tree
+	 */
+	void exitQueryValue(HTTPParser.QueryValueContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link HTTPParser#fragmentPart}.
 	 * @param ctx the parse tree
 	 */

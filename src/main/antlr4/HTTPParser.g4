@@ -141,10 +141,10 @@ fieldValue: QUOTE? (ALPHA_CHARS | DASH | UNDERSCORE | DIGITS | SLASH)+ QUOTE?;
 blank: NEWLINE | WS;
 
 requestLine:
-    (METHOD WS)? requestTarget (WS httpVersion)? NEWLINE?;
+    (METHOD WS+)? requestTarget (WS+ httpVersion)? WS* NEWLINE?;
 
 requestLineWithBody:
-    (METHOD WS)? requestTarget (WS httpVersion)? BODY_START_WITH_BLANK jsonBodyContent;
+    (METHOD WS+)? requestTarget (WS+ httpVersion)? BODY_START_WITH_BLANK jsonBodyContent;
 
 requestTarget: originForm | absoluteForm | asteriskForm;
 
@@ -197,16 +197,32 @@ asteriskForm: ASTERISK;
 queryPart: QUESTION_MARK queryContent?;
 
 queryContent:
-    segment EQUAL (
-    ALPHA_CHARS
+    queryParam (AMPERSAND queryParam)*;
+
+queryParam:
+    queryKey (EQUAL queryValue)?;
+
+queryKey:
+    (ALPHA_CHARS | DIGITS | DASH | UNDERSCORE | DOT | PERCENT)+;
+
+queryValue:
+    (ALPHA_CHARS
     | DIGITS
     | DOT
     | SLASH
     | COLON
-    | AMPERSAND
+    | DASH
+    | UNDERSCORE
     | PERCENT
-    | WS
-    )+ queryContent?;
+    | EQUAL
+    | QUESTION_MARK
+    | HASH
+    | OPEN_BRAKET
+    | CLOSE_BRAKET
+    | SCHEME_SEPARATOR
+    | SCHEME
+    | COMMA
+    )+;
 
     fragmentPart: HASH fragmentContent;
 

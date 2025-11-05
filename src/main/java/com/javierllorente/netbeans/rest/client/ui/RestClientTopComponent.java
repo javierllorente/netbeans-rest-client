@@ -15,18 +15,8 @@
  */
 package com.javierllorente.netbeans.rest.client.ui;
 
-import com.javierllorente.netbeans.rest.client.event.CellDocumentListener;
-import com.javierllorente.netbeans.rest.client.parsers.CellParamsParser;
-import com.javierllorente.netbeans.rest.client.RestClient;
-import com.javierllorente.netbeans.rest.client.event.TabChangeListener;
-import com.javierllorente.netbeans.rest.client.event.TableParamsListener;
-import com.javierllorente.netbeans.rest.client.event.TokenDocumentListener;
-import com.javierllorente.netbeans.rest.client.event.UrlDocumentListener;
-import com.javierllorente.netbeans.rest.client.UserAgent;
-import jakarta.ws.rs.HttpMethod;
-import jakarta.ws.rs.ProcessingException;
-import jakarta.ws.rs.core.MultivaluedMap;
 import java.awt.Cursor;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
@@ -34,19 +24,51 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.beans.PropertyChangeEvent;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.swing.GroupLayout;
+import javax.swing.JButton;
+import javax.swing.JPanel;
+import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
+import javax.swing.LayoutStyle;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentListener;
+
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
+import org.openide.awt.Mnemonics;
+import org.openide.cookies.OpenCookie;
+import org.openide.filesystems.FileObject;
+import org.openide.filesystems.FileUtil;
+import org.openide.loaders.DataObject;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.RequestProcessor;
 import org.openide.windows.TopComponent;
+
+import com.javierllorente.netbeans.rest.client.RestClient;
+import com.javierllorente.netbeans.rest.client.UserAgent;
+import com.javierllorente.netbeans.rest.client.event.CellDocumentListener;
+import com.javierllorente.netbeans.rest.client.event.TabChangeListener;
+import com.javierllorente.netbeans.rest.client.event.TableParamsListener;
+import com.javierllorente.netbeans.rest.client.event.TokenDocumentListener;
+import com.javierllorente.netbeans.rest.client.event.UrlDocumentListener;
+import com.javierllorente.netbeans.rest.client.parsers.CellParamsParser;
+
+import jakarta.ws.rs.HttpMethod;
+import jakarta.ws.rs.ProcessingException;
+import jakarta.ws.rs.core.MultivaluedMap;
 
 /**
  * Top component which displays something.
@@ -130,6 +152,8 @@ public class RestClientTopComponent extends TopComponent {
         urlPanel.addSendButtonActionListener((ae) -> {
             sendRequest();
         });
+
+        openInEditorBtn.addActionListener(ae -> openInEditor());
         
         urlPanel.addUrlKeyListener(new KeyAdapter() {
             @Override
@@ -239,8 +263,10 @@ public class RestClientTopComponent extends TopComponent {
         paramsPanel.removeTableModelListener(tableParamsListener);
         urlPanel.setUrl(url);
         paramsPanel.addTableModelListener(tableParamsListener);
-        setDisplayName(urlPanel.getRequestMethod() + " " + urlPanel.getDisplayUrl());
-        setToolTipText(urlPanel.getUrl());
+        SwingUtilities.invokeLater(() -> {
+            setDisplayName(urlPanel.getRequestMethod() + " " + urlPanel.getDisplayUrl());
+            setToolTipText(urlPanel.getUrl());
+        });
         urlPanel.requestUrlFocus();
     }
     
@@ -357,6 +383,49 @@ public class RestClientTopComponent extends TopComponent {
             }
         });
     }
+
+    private void openInEditor() {
+        try {
+            // Create HTTP request content
+            var httpContent = new StringBuilder();
+            httpContent.append(urlPanel.getRequestMethod()).append(" ").append(urlPanel.getUrl()).append("\n");
+
+            // Add headers
+            if (headersPanel.getRowCount() > 0) {
+                MultivaluedMap<String, String> headers = headersPanel.getValues();
+                for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
+                    for (String value : entry.getValue()) {
+                        httpContent.append(entry.getKey()).append(": ").append(value).append("\n");
+                    }
+                }
+            }
+
+            // Add body if present
+            if (!bodyPanel.getBodyType().equals("None")) {
+                httpContent.append("\n");
+                httpContent.append(bodyPanel.getBody());
+            }
+
+            // Create .http file inside netbeans-rest-client folder in user directory
+            File userDir = new File(System.getProperty("user.home"), ".netbeans/netbeans-rest-client");
+            userDir.mkdirs();
+            String timestamp = new SimpleDateFormat("yyyyMMdd'T'HHmmss").format(new Date());
+            File httpFile = new File(userDir, "request-" + timestamp + ".http");
+            Files.writeString(httpFile.toPath(), httpContent.toString());
+
+            // Open the file in the editor
+            FileObject fileObject = FileUtil.toFileObject(httpFile);
+            if (fileObject != null) {
+                DataObject dataObject = DataObject.find(fileObject);
+                OpenCookie openCookie = dataObject.getLookup().lookup(OpenCookie.class);
+                if (openCookie != null) {
+                    openCookie.open();
+                }
+            }
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+    }
     
     /**
      * This method is called from within the constructor to initialize the form.
@@ -367,44 +436,53 @@ public class RestClientTopComponent extends TopComponent {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        splitPane = new javax.swing.JSplitPane();
-        requestPanel = new javax.swing.JPanel();
-        requestTabbedPane = new javax.swing.JTabbedPane();
-        paramsPanel = new com.javierllorente.netbeans.rest.client.ui.TablePanel();
-        authPanel = new com.javierllorente.netbeans.rest.client.ui.AuthPanel();
-        headersPanel = new com.javierllorente.netbeans.rest.client.ui.TablePanel();
-        bodyPanel = new com.javierllorente.netbeans.rest.client.ui.BodyPanel();
-        urlPanel = new com.javierllorente.netbeans.rest.client.ui.UrlPanel();
-        responsePanel = new com.javierllorente.netbeans.rest.client.ui.ResponsePanel();
+        splitPane = new JSplitPane();
+        requestPanel = new JPanel();
+        requestTabbedPane = new JTabbedPane();
+        paramsPanel = new TablePanel();
+        authPanel = new AuthPanel();
+        headersPanel = new TablePanel();
+        bodyPanel = new BodyPanel();
+        urlPanel = new UrlPanel();
+        responsePanel = new ResponsePanel();
+        openInEditorBtn = new JButton();
 
-        setPreferredSize(new java.awt.Dimension(800, 600));
+        setPreferredSize(new Dimension(800, 600));
 
-        splitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
+        splitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
 
-        requestPanel.setPreferredSize(new java.awt.Dimension(800, 240));
+        requestPanel.setPreferredSize(new Dimension(800, 240));
 
-        requestTabbedPane.setPreferredSize(new java.awt.Dimension(705, 150));
+        requestTabbedPane.setPreferredSize(new Dimension(705, 150));
         requestTabbedPane.addTab("Params", paramsPanel);
         requestTabbedPane.addTab("Authorisation", authPanel);
         requestTabbedPane.addTab("Headers", headersPanel);
         requestTabbedPane.addTab("Body", bodyPanel);
 
-        javax.swing.GroupLayout requestPanelLayout = new javax.swing.GroupLayout(requestPanel);
+        Mnemonics.setLocalizedText(openInEditorBtn, "Open in editor");
+
+        GroupLayout requestPanelLayout = new GroupLayout(requestPanel);
         requestPanel.setLayout(requestPanelLayout);
         requestPanelLayout.setHorizontalGroup(
-            requestPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            requestPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(requestPanelLayout.createSequentialGroup()
-                .addComponent(requestTabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(requestTabbedPane, GroupLayout.DEFAULT_SIZE, 794, Short.MAX_VALUE)
                 .addContainerGap())
-            .addComponent(urlPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
-        requestPanelLayout.setVerticalGroup(
-            requestPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(requestPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(urlPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(openInEditorBtn)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(urlPanel, GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+        );
+        requestPanelLayout.setVerticalGroup(
+            requestPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+            .addGroup(requestPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(requestPanelLayout.createParallelGroup(GroupLayout.Alignment.TRAILING)
+                    .addComponent(urlPanel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                    .addComponent(openInEditorBtn))
                 .addGap(3, 3, 3)
-                .addComponent(requestTabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 245, Short.MAX_VALUE))
+                .addComponent(requestTabbedPane, GroupLayout.DEFAULT_SIZE, 211, Short.MAX_VALUE))
         );
 
         requestTabbedPane.getAccessibleContext().setAccessibleName("");
@@ -412,17 +490,17 @@ public class RestClientTopComponent extends TopComponent {
         splitPane.setTopComponent(requestPanel);
         splitPane.setBottomComponent(responsePanel);
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        GroupLayout layout = new GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(splitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 794, Short.MAX_VALUE)
+                .addComponent(splitPane, GroupLayout.DEFAULT_SIZE, 794, Short.MAX_VALUE)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(splitPane)
@@ -432,14 +510,15 @@ public class RestClientTopComponent extends TopComponent {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private com.javierllorente.netbeans.rest.client.ui.AuthPanel authPanel;
-    private com.javierllorente.netbeans.rest.client.ui.BodyPanel bodyPanel;
-    private com.javierllorente.netbeans.rest.client.ui.TablePanel headersPanel;
-    private com.javierllorente.netbeans.rest.client.ui.TablePanel paramsPanel;
-    private javax.swing.JPanel requestPanel;
-    private javax.swing.JTabbedPane requestTabbedPane;
-    private com.javierllorente.netbeans.rest.client.ui.ResponsePanel responsePanel;
-    private javax.swing.JSplitPane splitPane;
-    private com.javierllorente.netbeans.rest.client.ui.UrlPanel urlPanel;
+    private AuthPanel authPanel;
+    private BodyPanel bodyPanel;
+    private TablePanel headersPanel;
+    private JButton openInEditorBtn;
+    private TablePanel paramsPanel;
+    private JPanel requestPanel;
+    private JTabbedPane requestTabbedPane;
+    private ResponsePanel responsePanel;
+    private JSplitPane splitPane;
+    private UrlPanel urlPanel;
     // End of variables declaration//GEN-END:variables
 }

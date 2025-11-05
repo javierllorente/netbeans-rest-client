@@ -637,11 +637,48 @@ public class HTTPParserTest {
         String httpText
             = "https://jsonplaceholder.typicode.com/todos/1\n"
             + "###\n"
-            + "https://jsonplaceholder.typicode.com/todos/2";
+            + "https://jsonplaceholder.typicode.com/todos/2\n"
+            + "### Test\n"
+            + "google.de/        HTTP/1.1\n"
+            + "###\n"
+            + "http://google.de                                  ";
 
         List<String> errors = parseAndGetErrors(httpText);
 
         assertTrue("Expected no errors for multiple bare URLs, but got: " + errors,
+            errors.isEmpty());
+    }
+
+    /**
+     * Test Case 23: Multiple origin based URLs separated by request separator Expected:
+     * No errors
+     */
+    @Test
+    public void testOriginUrls() {
+        String httpText
+            = "POST /url?sa=t&source=web&rct=j&url=https://zh.wikipedia.org/zh-hans/111&ved=2ahUKEwjhwLuRtbjiAhUPRK0KHRSjDpwQFjAKegQIAxAB HTTP/1.1\n"
+            + "### test\n"
+            + "POST /url?sa=t&source=web&rct=j HTTP/1.1\n";
+
+        List<String> errors = parseAndGetErrors(httpText);
+
+        assertTrue("Expected no errors for origin based urls /url?... URLs, but got: " + errors,
+            errors.isEmpty());
+    }
+    
+    /**
+     * Test Case 24: Multiple bare URLs separated by request separator Expected:
+     * No errors
+     */
+    @Test
+    public void testBareUrlWithSpacesAndHaders() {
+        String httpText
+            = "http://google.de                                  \n"
+            + "User-Agent: RestClient/0.7.1 (Windows 11 10.0; amd64) Apache NetBeans IDE 24";
+
+        List<String> errors = parseAndGetErrors(httpText);
+
+        assertTrue("Expected no errors for bare URL with spaces and header, but got: " + errors,
             errors.isEmpty());
     }
 }
