@@ -70,6 +70,19 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.util.RequestProcessor;
 import org.openide.windows.TopComponent;
 
+import com.javierllorente.netbeans.rest.client.RestClient;
+import com.javierllorente.netbeans.rest.client.UserAgent;
+import com.javierllorente.netbeans.rest.client.event.CellDocumentListener;
+import com.javierllorente.netbeans.rest.client.event.TabChangeListener;
+import com.javierllorente.netbeans.rest.client.event.TableParamsListener;
+import com.javierllorente.netbeans.rest.client.event.TokenDocumentListener;
+import com.javierllorente.netbeans.rest.client.event.UrlDocumentListener;
+import com.javierllorente.netbeans.rest.client.parsers.CellParamsParser;
+
+import jakarta.ws.rs.HttpMethod;
+import jakarta.ws.rs.ProcessingException;
+import jakarta.ws.rs.core.MultivaluedMap;
+
 /**
  * Top component which displays something.
  */
