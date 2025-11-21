@@ -43,6 +43,10 @@ public class BodyPanel extends javax.swing.JPanel {
         return editorPane.getText();
     }
     
+    public void setBody(String body) {
+        editorPane.setText(body);
+    }
+    
     public void setComboBoxEnabled(boolean enable) {
         bodyComboBox.setEnabled(enable);
     }

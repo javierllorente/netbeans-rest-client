@@ -36,45 +36,54 @@ httpRequestsFile:
     (blank | COMMENT)*
     EOF;
 
-requestBlock: request | invalidBodyWithoutRequest;
+requestBlock: blank* (request | invalidBodyWithoutRequest);
 
 request:
     requestLine requestHeaders? requestBodySection?
     | requestLineWithBody;
 
-requestHeaders: {_input.LA(1) == ALPHA_CHARS}? (headerLine)+;
+requestHeaders: (headerLine)+;
 
-headerLine:
-    header NEWLINE?
-    | invalidHeaderLine;
+headerLine: 
+    (WS* header (NEWLINE | {_input.LA(1) == BODY_START_WITH_BLANK || _input.LA(1) == GENERIC_BODY_START || _input.LA(1) == BODY_START_NO_BLANK || _input.LA(1) == EOF}?)
+    | WS* invalidHeaderLine);
 
 invalidBodyWithoutRequest:
     {
         notifyErrorListeners("Request body requires a request line");
     }
-    (BODY_START_WITH_BLANK | BODY_START_NO_BLANK) jsonBodyContent;
+    (BODY_START_WITH_BLANK | BODY_START_NO_BLANK | GENERIC_BODY_START)
+    .*?
+    (REQUEST_SEPARATOR | EOF);
 
 invalidHeaderLine:
-    {_input.LA(2) != COLON}?
+    {_input.LA(2) != COLON && _input.LA(1) != COMMENT && _input.LA(1) != NEWLINE}?
     invalidHeaderContent
     {
         notifyErrorListeners("Unknown HTTP header");
     }
     NEWLINE?;
 
-invalidHeaderContent: ~(NEWLINE | REQUEST_SEPARATOR | BODY_START_WITH_BLANK | BODY_START_NO_BLANK | COMMENT | EOF | WS)+;
+invalidHeaderContent: ~(NEWLINE | REQUEST_SEPARATOR | BODY_START_WITH_BLANK | BODY_START_NO_BLANK | GENERIC_BODY_START | COMMENT | EOF | WS)+;
 
 requestBodySection:
     (WS | NEWLINE | COMMENT)* requestBody;
 
 requestBody:
-    BODY_START_WITH_BLANK jsonBodyContent
-    | BODY_START_NO_BLANK jsonBodyContent;
+    bodyWithStarter
+    | directBodyContent;
 
-jsonBodyContent:
-    space (pair (space COMMA space pair)*)? space CLOSE_BLOCK_BRAKET
-    | {true}? ~REQUEST_SEPARATOR* CLOSE_BLOCK_BRAKET  // Catch-all: match anything until }
-    | {true}? ~REQUEST_SEPARATOR*;  // Last resort: match anything
+bodyWithStarter:
+    (BODY_START_WITH_BLANK | BODY_START_NO_BLANK | GENERIC_BODY_START) bodyContent;
+
+// Pure body content in BODY_CONTENT mode
+bodyContent:
+    (.)*? CLOSE_BLOCK_BRAKET  // Match anything until }
+    | (.)* ;  // Match anything until end
+
+// Direct body content for special cases (uppercase, etc.)
+directBodyContent:
+    (~(REQUEST_SEPARATOR | EOF))+ ;
 
 // Json structure for requestBody
 jsonObject:
@@ -132,7 +141,7 @@ header: headerField;
 headerField: headerFieldName COLON WS* headerFieldValue;
 
 headerFieldName: (ALPHA_CHARS | DASH | UNDERSCORE)+;
-headerFieldValue: (~(NEWLINE | BODY_START_WITH_BLANK | BODY_START_NO_BLANK))*;
+headerFieldValue: (~(NEWLINE | BODY_START_WITH_BLANK | BODY_START_NO_BLANK | GENERIC_BODY_START))*;
 
 fieldName: QUOTE (ALPHA_CHARS | DASH | UNDERSCORE) QUOTE;
 
@@ -144,7 +153,7 @@ requestLine:
     (METHOD WS+)? requestTarget (WS+ httpVersion)? WS* NEWLINE?;
 
 requestLineWithBody:
-    (METHOD WS+)? requestTarget (WS+ httpVersion)? BODY_START_WITH_BLANK jsonBodyContent;
+    (METHOD WS+)? requestTarget (WS+ httpVersion)? BODY_START_WITH_BLANK bodyContent;
 
 requestTarget: originForm | absoluteForm | asteriskForm;
 

@@ -445,7 +445,7 @@ public class HTTPParserTest {
      * Expected: Exactly 1 error for body without request line
      */
     @Test
-    public void testCompleteHTTPExample() {
+    public void testCompleteHTTPExampleWithErrorOfMissingRequstLineBeforeBody() {
         String httpText
             = "### Request 1\n"
             + "\n"
@@ -556,7 +556,7 @@ public class HTTPParserTest {
      * "Unknown HTTP header" (every request needs blank line before body)
      */
     @Test
-    public void testValieSimpleRequestLineWithheaderAndEmptyBody() {
+    public void testValidSimpleRequestLineWithHeaderAndInvalidEmptyBody() {
         String httpText
             = "GET http://test.de HTTP/1.1\n"
             + "content-type: application/json\n"
@@ -601,8 +601,8 @@ public class HTTPParserTest {
     }
 
     /**
-     * Test Case 20: URL without method, headers or body (bare URL)
-     * Expected: No errors
+     * Test Case 20: URL without method, headers or body (bare URL) Expected: No
+     * errors
      */
     @Test
     public void testBareUrl() {
@@ -615,8 +615,8 @@ public class HTTPParserTest {
     }
 
     /**
-     * Test Case 21: URL without method, headers or body with newline
-     * Expected: No errors
+     * Test Case 21: URL without method, headers or body with newline Expected:
+     * No errors
      */
     @Test
     public void testBareUrlWithNewline() {
@@ -629,8 +629,8 @@ public class HTTPParserTest {
     }
 
     /**
-     * Test Case 22: Multiple bare URLs separated by request separator
-     * Expected: No errors
+     * Test Case 22: Multiple bare URLs separated by request separator Expected:
+     * No errors
      */
     @Test
     public void testMultipleBareUrls() {
@@ -650,8 +650,8 @@ public class HTTPParserTest {
     }
 
     /**
-     * Test Case 23: Multiple origin based URLs separated by request separator Expected:
-     * No errors
+     * Test Case 23: Multiple origin based URLs separated by request separator
+     * Expected: No errors
      */
     @Test
     public void testOriginUrls() {
@@ -665,7 +665,7 @@ public class HTTPParserTest {
         assertTrue("Expected no errors for origin based urls /url?... URLs, but got: " + errors,
             errors.isEmpty());
     }
-    
+
     /**
      * Test Case 24: Multiple bare URLs separated by request separator Expected:
      * No errors
@@ -680,5 +680,267 @@ public class HTTPParserTest {
 
         assertTrue("Expected no errors for bare URL with spaces and header, but got: " + errors,
             errors.isEmpty());
+    }
+
+    /**
+     * Test Case 25: Valid GET request with simple text body. Expected: No
+     * errors
+     */
+    @Test
+    public void testValidGetRequestWithTextBody() {
+        String httpText
+            = "### Request 2\n"
+            + "\n"
+            + "GET http://test.de HTTP/1.1\n"
+            + "\n"
+            + "data";
+
+        List<String> errors = parseAndGetErrors(httpText);
+
+        assertTrue("Expected no errors for valid GET request with body, but got: " + errors,
+            errors.isEmpty());
+    }
+
+    /**
+     * Test Case 26: Valid GET request with html body. Expected: No errors
+     */
+    @Test
+    public void testValidGetRequestWithHtmlBody() {
+        String httpText
+            = "### Request 2\n"
+            + "\n"
+            + "GET http://test.de HTTP/1.1\n"
+            + "\n"
+            + "<div>Test</div>";
+
+        List<String> errors = parseAndGetErrors(httpText);
+
+        assertTrue("Expected no errors for valid GET request with body, but got: " + errors,
+            errors.isEmpty());
+    }
+
+    /**
+     * Test Case 27: Valid GET request with multiline text body. Expected: No
+     * errors
+     */
+    @Test
+    public void testValidGetRequestWithMultilineTextBody() {
+        String httpText
+            = "### Request 2\n"
+            + "\n"
+            + "GET http://test.de HTTP/1.1\n"
+            + "\n"
+            + "data\n"
+            + "foo\n"
+            + "bar\n";
+
+        List<String> errors = parseAndGetErrors(httpText);
+
+        assertTrue("Expected no errors for valid GET request with multiline text body, but got: " + errors,
+            errors.isEmpty());
+    }
+
+    /**
+     * Test Case 28: Valid complete HTTP Example with multi requests with body
+     * indentation. Expected: No errors
+     */
+    @Test
+    public void testValidHttpExampleWithMultiRequestsAndBodyIndentation() {
+        String httpText
+            = "### Request 1\n"
+            + "\n"
+            + "    // POST request with json payload\n"
+            + "    POST https://google.de HTTP/1.1\n"
+            + "    content-type: application/json\n"
+            + "\n"
+            + "# Test\n"
+            + "    {\n"
+            + "        \"id\":12,\n"
+            + "        \"time\": \"Wed, 21 Oct 2015 18:27:50 GMT\",\n"
+            + "        \"path\": \"./test/test\",\n"
+            + "        \"urlstring\": \"https://google.de\",\n"
+            + "        \"commentstring\": \"//google.de\",\n"
+            + "        \"seperatorstring\": \"###google.de\",\n"
+            + "        \"methodstring\": \"GET\",\n"
+            + "        \"header\": \"content-type: application/json\",\n"
+            + "        \"array\": [\"1\", 3, \"foo\", \"bar\", 2, \"baz\"],\n"
+            + "        \"\": 33,\n"
+            + "        \"foo\": {\n"
+            + "            \"foo\": 12,\n"
+            + "            \"footer\": {\n"
+            + "                \"test\": 12,\n"
+            + "                \"bar\": \"asd\",\n"
+            + "                \"baz\": \"asd\"\n"
+            + "            }\n"
+            + "        }\n"
+            + "    }\n"
+            + "\n"
+            + "    ### Request 2\n"
+            + "\n"
+            + "    GET http://test.de HTTP/1.2\n"
+            + "    content-type: application/json\n"
+            + "\n"
+            + "    ### Request 2\n"
+            + "\n"
+            + "    GET http://google.de HTTP/1.1\n"
+            + "\n"
+            + "    {\n"
+            + "        \"test\": \"13\",\n"
+            + "        \"test\": {\n"
+            + "            \"test\": 12\n"
+            + "        }\n"
+            + "    }\n";
+
+        List<String> errors = parseAndGetErrors(httpText);
+
+        assertTrue("Expected no errors for valid multi requests, but got: " + errors,
+            errors.isEmpty());
+    }
+
+    /**
+     * Test Case 29: Valid complete HTTP Example with multi requests without
+     * body indentation. Expected: No errors
+     */
+    @Test
+    public void testValidHttpExampleWithMultiRequestsWithoutBodyIndentation() {
+        String httpText
+            = "### Request 1\n"
+            + "\n"
+            + "    // POST request with json payload\n"
+            + "    POST https://google.de HTTP/1.1\n"
+            + "    content-type: application/json\n"
+            + "\n"
+            + "# Test\n"
+            + "{\n"
+            + "    \"id\":12,\n"
+            + "    \"time\": \"Wed, 21 Oct 2015 18:27:50 GMT\",\n"
+            + "    \"path\": \"./test/test\",\n"
+            + "    \"urlstring\": \"https://google.de\",\n"
+            + "    \"commentstring\": \"//google.de\",\n"
+            + "    \"seperatorstring\": \"###google.de\",\n"
+            + "    \"methodstring\": \"GET\",\n"
+            + "    \"header\": \"content-type: application/json\",\n"
+            + "    \"array\": [\"1\", 3, \"foo\", \"bar\", 2, \"baz\"],\n"
+            + "    \"\": 33,\n"
+            + "    \"foo\": {\n"
+            + "        \"foo\": 12,\n"
+            + "        \"footer\": {\n"
+            + "            \"test\": 12,\n"
+            + "            \"bar\": \"asd\",\n"
+            + "            \"baz\": \"asd\"\n"
+            + "        }\n"
+            + "    }\n"
+            + "}\n"
+            + "\n"
+            + "    ### Request 2\n"
+            + "\n"
+            + "    GET http://test.de HTTP/1.2\n"
+            + "    content-type: application/json\n"
+            + "\n"
+            + "    ### Request 2\n"
+            + "\n"
+            + "    GET http://google.de HTTP/1.1\n"
+            + "\n"
+            + "    {\n"
+            + "        \"test\": \"13\",\n"
+            + "        \"test\": {\n"
+            + "            \"test\": 12\n"
+            + "        }\n"
+            + "    }\n";
+
+        List<String> errors = parseAndGetErrors(httpText);
+
+        assertTrue("Expected no errors for valid multi requests, but got: " + errors,
+            errors.isEmpty());
+    }
+
+    /**
+     * Test Case 30: Valid GET request with header and multiline text body.
+     * Expected: No errors
+     */
+    @Test
+    public void testValidGetRequestWithHeaderAndMultilineTextBody() {
+        String httpText
+            = "### Request 2\n"
+            + "\n"
+            + "GET http://test.de HTTP/1.1\n"
+            + "Content-Type: application/json\n"
+            + "\n"
+            + "data\n"
+            + "foo\n"
+            + "bar\n";
+
+        List<String> errors = parseAndGetErrors(httpText);
+
+        assertTrue("Expected no errors for valid GET request with header and multiline text body, but got: " + errors,
+            errors.isEmpty());
+    }
+
+    /**
+     * Test Case 31: Valid GET request with header and comment and multilinme
+     * text body. Expected: No errors
+     */
+    @Test
+    public void testValidGetRequestWithHeaderAndCOmmentMultilineTextBody() {
+        String httpText
+            = "### Request 2\n"
+            + "\n"
+            + "GET http://test.de HTTP/1.1\n"
+            + "Content-Type: application/json\n"
+            + "\n"
+            + "# Test"
+            + "data\n"
+            + "foo\n"
+            + "bar\n";
+
+        List<String> errors = parseAndGetErrors(httpText);
+
+        assertTrue("Expected no errors for valid GET request with multiline text body, but got: " + errors,
+            errors.isEmpty());
+    }
+
+    /**
+     * Test Case 32: Valid GET request with header and multiline text body with
+     * uppercase first character. Expected: No errors
+     */
+    @Test
+    public void testValidGetRequestWithHeaderAndMultilineTextBodyAndUpperCharacterInBody() {
+        String httpText
+            = "### Request 2\n"
+            + "\n"
+            + "GET http://test.de HTTP/1.1\n"
+            + "Content-Type: application/json\n"
+            + "\n"
+            + "Data\n"
+            + "foo\n"
+            + "bar\n";
+
+        List<String> errors = parseAndGetErrors(httpText);
+
+        assertTrue("Expected no errors for valid GET request with header and multiline text body, but got: " + errors,
+            errors.isEmpty());
+    }
+
+    /**
+     * Test Case 33: requestline with valid header and invalid header Expected:
+     * Error "Unknown HTTP header"
+     */
+    @Test
+    public void testValieSimpleRequestLineWithValidheaderAndInvalidHeaderPart() {
+        String httpText
+            = "GET http://test.de HTTP/1.1\n"
+            + "content-type: application/json\n"
+            + "test";
+
+        List<String> errors = parseAndGetErrors(httpText);
+
+        assertFalse("Expected at least one error for bare request without blank line before body",
+            errors.isEmpty());
+
+        boolean foundExpectedError = errors.stream()
+            .anyMatch(msg -> msg.contains("Unknown HTTP header"));
+
+        assertTrue("Expected error message 'Unknown HTTP header', but got: " + errors,
+            foundExpectedError);
     }
 }

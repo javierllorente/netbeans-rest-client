@@ -64,6 +64,7 @@ public class RestClient {
     private String authType;
     private String username;
     private String password;
+    private String method;
     private String uri;
     private MultivaluedMap<String, String> headers;
     private String body;
@@ -84,6 +85,7 @@ public class RestClient {
         authType = NO_AUTH;
         body = "";
         bodyType = "None";
+        method = "GET";
     }
 
     private void buildClient(boolean verifySslCertificates) {
@@ -123,6 +125,18 @@ public class RestClient {
         }
         return sslContext;
     }
+    
+    public void setMethod(String method) {
+        this.method = method;
+    }
+    
+    public String getMethod() {
+        return this.method;
+    }
+    
+    public void setUri(String target) {
+        this.uri = target;
+    }
 
     public void setAuthType(String authType) {
         this.authType = authType;
@@ -144,9 +158,17 @@ public class RestClient {
     public void setBody(String body) {
         this.body = body;
     }
+    
+    public String getBody() {
+        return this.body;
+    }
 
     public void setBodyType(String bodyType) {
         this.bodyType = bodyType;
+    }
+
+    public String getBodyType() {
+        return this.bodyType;
     }
 
     public MultivaluedMap<String, Object> getResponseHeaders() {

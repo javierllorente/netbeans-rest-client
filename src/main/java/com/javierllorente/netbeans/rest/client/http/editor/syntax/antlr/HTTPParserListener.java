@@ -108,15 +108,35 @@ public interface HTTPParserListener extends ParseTreeListener {
 	 */
 	void exitRequestBody(HTTPParser.RequestBodyContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link HTTPParser#jsonBodyContent}.
+	 * Enter a parse tree produced by {@link HTTPParser#bodyWithStarter}.
 	 * @param ctx the parse tree
 	 */
-	void enterJsonBodyContent(HTTPParser.JsonBodyContentContext ctx);
+	void enterBodyWithStarter(HTTPParser.BodyWithStarterContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link HTTPParser#jsonBodyContent}.
+	 * Exit a parse tree produced by {@link HTTPParser#bodyWithStarter}.
 	 * @param ctx the parse tree
 	 */
-	void exitJsonBodyContent(HTTPParser.JsonBodyContentContext ctx);
+	void exitBodyWithStarter(HTTPParser.BodyWithStarterContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link HTTPParser#bodyContent}.
+	 * @param ctx the parse tree
+	 */
+	void enterBodyContent(HTTPParser.BodyContentContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link HTTPParser#bodyContent}.
+	 * @param ctx the parse tree
+	 */
+	void exitBodyContent(HTTPParser.BodyContentContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link HTTPParser#directBodyContent}.
+	 * @param ctx the parse tree
+	 */
+	void enterDirectBodyContent(HTTPParser.DirectBodyContentContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link HTTPParser#directBodyContent}.
+	 * @param ctx the parse tree
+	 */
+	void exitDirectBodyContent(HTTPParser.DirectBodyContentContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link HTTPParser#jsonObject}.
 	 * @param ctx the parse tree

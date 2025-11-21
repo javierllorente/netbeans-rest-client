@@ -137,13 +137,37 @@ public class HTTPParserBaseListener implements HTTPParserListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterJsonBodyContent(HTTPParser.JsonBodyContentContext ctx) { }
+	@Override public void enterBodyWithStarter(HTTPParser.BodyWithStarterContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitJsonBodyContent(HTTPParser.JsonBodyContentContext ctx) { }
+	@Override public void exitBodyWithStarter(HTTPParser.BodyWithStarterContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterBodyContent(HTTPParser.BodyContentContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitBodyContent(HTTPParser.BodyContentContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterDirectBodyContent(HTTPParser.DirectBodyContentContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitDirectBodyContent(HTTPParser.DirectBodyContentContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
