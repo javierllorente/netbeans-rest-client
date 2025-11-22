@@ -46,17 +46,20 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.GroupLayout;
 import javax.swing.JButton;
+import javax.swing.JEditorPane;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.LayoutStyle;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentListener;
+import javax.swing.text.StyledDocument;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.Mnemonics;
+import org.openide.cookies.EditorCookie;
 import org.openide.cookies.OpenCookie;
 import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
@@ -412,7 +415,10 @@ public class RestClientTopComponent extends TopComponent {
         try {
             // Create HTTP request content
             var httpContent = new StringBuilder();
-            httpContent.append(urlPanel.getRequestMethod()).append(" ").append(urlPanel.getUrl()).append("\n");
+            String method = urlPanel.getRequestMethod();
+            String url = urlPanel.getUrl();
+
+            httpContent.append(method).append(" ").append(url != null ? url : "").append("\n");
 
             // Add headers
             if (headersPanel.getRowCount() > 0) {
@@ -430,20 +436,46 @@ public class RestClientTopComponent extends TopComponent {
                 httpContent.append(bodyPanel.getBody());
             }
 
+            String httpText = httpContent.toString();
+
             // Create .http file inside netbeans-rest-client folder in user directory
             File userDir = new File(System.getProperty("user.home"), ".netbeans/netbeans-rest-client");
             userDir.mkdirs();
             String timestamp = new SimpleDateFormat("yyyyMMdd'T'HHmmss").format(new Date());
             File httpFile = new File(userDir, "request-" + timestamp + ".http");
-            Files.writeString(httpFile.toPath(), httpContent.toString());
+            Files.writeString(httpFile.toPath(), httpText);
 
             // Open the file in the editor
             FileObject fileObject = FileUtil.toFileObject(httpFile);
             if (fileObject != null) {
                 DataObject dataObject = DataObject.find(fileObject);
                 OpenCookie openCookie = dataObject.getLookup().lookup(OpenCookie.class);
-                if (openCookie != null) {
-                    openCookie.open();
+                EditorCookie editor = dataObject.getLookup().lookup(EditorCookie.class);
+
+                if (openCookie == null) {
+                    return;
+                }
+
+                openCookie.open();
+                editor.openDocument();
+
+                if (url == null || "".equals(url)) {
+                    final int caretOffset = method.length() + 1;
+
+                    SwingUtilities.invokeLater(() -> {
+                        StyledDocument doc = editor.getDocument();
+                        if (doc == null) {
+                            return;
+                        }
+
+                        JEditorPane[] panes = editor.getOpenedPanes();
+                        if (panes == null || panes.length == 0) {
+                            return;
+                        }
+
+                        int pos = Math.min(caretOffset, doc.getLength());
+                        panes[0].setCaretPosition(pos);
+                    });
                 }
             }
         } catch (IOException ex) {
