@@ -15,7 +15,7 @@
  */
 package com.javierllorente.netbeans.rest.client.ui;
 
-import com.javierllorente.netbeans.rest.client.Utils;
+import com.javierllorente.netbeans.rest.util.Utils;
 import com.javierllorente.netbeans.rest.client.editor.RestMediaType;
 import jakarta.json.Json;
 import jakarta.json.JsonReader;

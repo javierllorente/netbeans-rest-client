@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.javierllorente.netbeans.rest.client;
+package com.javierllorente.netbeans.rest.util;
 
 import jakarta.json.Json;
 import jakarta.json.JsonArray;
