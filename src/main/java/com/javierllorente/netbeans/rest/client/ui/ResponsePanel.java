@@ -15,7 +15,7 @@
  */
 package com.javierllorente.netbeans.rest.client.ui;
 
-import com.javierllorente.netbeans.rest.util.Utils;
+import com.javierllorente.netbeans.rest.util.FormatUtils;
 import com.javierllorente.netbeans.rest.client.editor.RestMediaType;
 import jakarta.json.Json;
 import jakarta.json.JsonReader;
@@ -145,14 +145,14 @@ public class ResponsePanel extends JPanel {
             switch (mimePath) {
                 case RestMediaType.JSON:
                     try (JsonReader jsonReader = Json.createReader(new StringReader(prettyOrNotResponse))) {
-                        prettyOrNotResponse = Utils.jsonPrettyFormat(jsonReader.read());
+                        prettyOrNotResponse = FormatUtils.jsonPrettyFormat(jsonReader.read());
                     }
                     break;
                 case RestMediaType.XML:
-                    prettyOrNotResponse = Utils.xmlPrettyFormat(prettyOrNotResponse);
+                    prettyOrNotResponse = FormatUtils.xmlPrettyFormat(prettyOrNotResponse);
                     break;
                 case MediaType.TEXT_HTML:
-                    prettyOrNotResponse = Utils.htmlPrettyFormat(prettyOrNotResponse);
+                    prettyOrNotResponse = FormatUtils.htmlPrettyFormat(prettyOrNotResponse);
                     break;
             }
         }
