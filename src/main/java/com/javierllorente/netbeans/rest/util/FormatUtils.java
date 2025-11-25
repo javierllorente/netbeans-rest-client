@@ -45,9 +45,9 @@ import org.openide.util.Exceptions;
  *
  * @author Javier Llorente <javier@opensuse.org>
  */
-public class Utils {
+public class FormatUtils {
 
-    private Utils() {
+    private FormatUtils() {
     }
 
     public static String jsonPrettyFormat(JsonStructure jsonStructure) {
@@ -85,7 +85,7 @@ public class Utils {
     }
     
     private static Source readXsl() {
-        InputStream inputStream = Utils.class.getResourceAsStream("prettyprint.xsl");
+        InputStream inputStream = FormatUtils.class.getResourceAsStream("prettyprint.xsl");
         Source xslSource = null;
         try {
             if (inputStream != null) {
