@@ -23,6 +23,7 @@ import com.javierllorente.netbeans.rest.client.event.TableParamsListener;
 import com.javierllorente.netbeans.rest.client.event.TokenDocumentListener;
 import com.javierllorente.netbeans.rest.client.event.UrlDocumentListener;
 import com.javierllorente.netbeans.rest.client.UserAgent;
+import com.javierllorente.netbeans.rest.util.ExceptionUtils;
 import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.core.MultivaluedMap;
@@ -317,16 +318,7 @@ public class RestClientTopComponent extends TopComponent {
                 updateResponsePanel(response, responseHeaders);
             } catch (ProcessingException ex) {
                 logger.warning(ex.getMessage());
-                String response = (ex.getMessage().contains("PKIX path building failed"))
-                        ? "Could not get response: failed to verify SSL certificate\n"
-                        + "SSL certificate verification is enabled. "
-                        + "You may disable it under Tools->Options->Miscellaneous->REST Client"
-                        : ex.getMessage();
-                SwingUtilities.invokeLater(() -> {
-                    responsePanel.setContentType("");
-                    responsePanel.setResponse(response);
-                    responsePanel.showResponse();
-                });
+                ExceptionUtils.handleAndDisplayProcessingException(ex, responsePanel);
             } finally {
                 progressHandle.finish();
                 setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
