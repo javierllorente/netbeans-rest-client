@@ -341,14 +341,17 @@ public class HTTPSemanticAnalyzer extends SemanticAnalyzer<HTTPLangParserResult>
         }
 
         try {
-            // Walk down the parse tree: requestBodySection -> requestBody -> jsonBodyContent
             HTTPParser.RequestBodyContext requestBody = requestBodySectionContext.requestBody();
             if (requestBody == null) {
                 return;
             }
 
-            HTTPParser.JsonBodyContentContext jsonBodyContent = requestBody.jsonBodyContent();
-            if (jsonBodyContent == null || jsonBodyContent.start == null || jsonBodyContent.stop == null) {
+            HTTPParser.BodyContentContext bodyContent = null;
+            if (requestBody.bodyWithStarter() != null) {
+                bodyContent = requestBody.bodyWithStarter().bodyContent();
+            }
+
+            if (bodyContent == null || bodyContent.start == null || bodyContent.stop == null) {
                 return;
             }
 
@@ -367,7 +370,7 @@ public class HTTPSemanticAnalyzer extends SemanticAnalyzer<HTTPLangParserResult>
 
             // Use token-based highlighting with intelligent context tracking
             // This is necessary because catch-all grammar rules prevent proper parse-tree structure
-            highlightJsonTokenBased(result, jsonBodyContent);
+            highlightJsonTokenBased(result, bodyContent);
         } catch (Exception e) {
             LOGGER.log(Level.WARNING, "Error highlighting JSON content", e);
         }
@@ -382,14 +385,14 @@ public class HTTPSemanticAnalyzer extends SemanticAnalyzer<HTTPLangParserResult>
      * (objects vs arrays) - Keys appear after '{' or ',' in object context -
      * Values appear after ':' in object context
      */
-    private void highlightJsonTokenBased(HTTPLangParserResult result, HTTPParser.JsonBodyContentContext jsonBodyContent) {
-        if (jsonBodyContent == null || jsonBodyContent.start == null || jsonBodyContent.stop == null) {
+    private void highlightJsonTokenBased(HTTPLangParserResult result, HTTPParser.BodyContentContext bodyContent) {
+        if (bodyContent == null || bodyContent.start == null || bodyContent.stop == null) {
             return;
         }
 
         try {
-            int contentStart = jsonBodyContent.start.getTokenIndex();
-            int contentEnd = jsonBodyContent.stop.getTokenIndex();
+            int contentStart = bodyContent.start.getTokenIndex();
+            int contentEnd = bodyContent.stop.getTokenIndex();
 
             TokenStream tokens = result.getTokenStream();
             if (tokens == null) {

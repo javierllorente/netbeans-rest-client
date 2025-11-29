@@ -65,4 +65,12 @@
       </folder>
     </folder>
   </folder>
+  <folder name="Menu">
+    <folder name="Tools">
+      <folder name="RestClient">
+        <attr name="displayName" bundlevalue="com.javierllorente.netbeans.rest.client.ui.RestClientTopComponent#CTL_RestClientAction"/>
+        <attr name="position" intvalue="805"/>
+      </folder>
+    </folder>
+  </folder>
 </filesystem>

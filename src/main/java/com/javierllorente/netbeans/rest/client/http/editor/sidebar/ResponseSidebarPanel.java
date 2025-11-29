@@ -24,9 +24,12 @@ import com.javierllorente.netbeans.rest.client.ui.ResponsePanel;
 import jakarta.ws.rs.core.MultivaluedMap;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.Map;
 import javax.swing.BorderFactory;
@@ -42,10 +45,16 @@ import javax.swing.text.JTextComponent;
  */
 public class ResponseSidebarPanel extends JPanel {
 
+    private static final int MIN_WIDTH = 120;
+    private static final int MAX_WIDTH = 1200;
+
     private final ResponsePanel responsePanel;
     private final JTextComponent textComponent;
+
     private boolean visible;
     private int calculatedWidth = -1; // Cache the width once calculated
+    private int pressXScreen;
+    private int startWidth;
 
     public ResponseSidebarPanel(JTextComponent target) {
         super(new BorderLayout());
@@ -71,6 +80,7 @@ public class ResponseSidebarPanel extends JPanel {
         closeButton.setBorderPainted(false);
         closeButton.setContentAreaFilled(false);
         closeButton.setFocusPainted(false);
+        closeButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         closeButton.setToolTipText("Close response view");
         closeButton.addActionListener(e -> {
             setVisible(false);
@@ -87,16 +97,46 @@ public class ResponseSidebarPanel extends JPanel {
         add(headerPanel, BorderLayout.NORTH);
         add(responsePanel, BorderLayout.CENTER);
 
-        // Initially hidden
+        JPanel resizablePanel = createResizeHandle();
+        add(resizablePanel, BorderLayout.WEST);
+
         setPreferredSize(new Dimension(0, 0));
     }
 
-    /**
-     * Set the content type and update the editor kit. Maps HTTP content types
-     * to NetBeans MIME types like ResponsePanel does.
-     */
-    public void setContentType(String contentType) {
-        responsePanel.setContentType(contentType);
+    private JPanel createResizeHandle() {
+        JPanel handle = new JPanel();
+        handle.setOpaque(true);
+        handle.setPreferredSize(new Dimension(10, 0));
+        handle.setCursor(Cursor.getPredefinedCursor(Cursor.W_RESIZE_CURSOR));
+
+        MouseAdapter ma = new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                pressXScreen = e.getXOnScreen();
+                startWidth = getPreferredSize().width;
+            }
+
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                int delta = e.getXOnScreen() - pressXScreen;
+                calculatedWidth = clamp(startWidth - delta, MIN_WIDTH, MAX_WIDTH);
+                setPreferredSize(new Dimension(calculatedWidth, 0));
+                revalidate();
+
+                if (getParent() != null) {
+                    getParent().revalidate();
+                }
+            }
+        };
+
+        handle.addMouseListener(ma);
+        handle.addMouseMotionListener(ma);
+
+        return handle;
+    }
+
+    private static int clamp(int v, int min, int max) {
+        return Math.max(min, Math.min(max, v));
     }
 
     /**
@@ -165,19 +205,12 @@ public class ResponseSidebarPanel extends JPanel {
     }
 
     /**
-     * Show the sidebar with the given response.
-     */
-    public void showResponse(String response, String contentType) {
-        showResponse(response, contentType, null);
-    }
-
-    /**
      * Show the sidebar with the given response and headers.
      */
     public void showResponse(String response, String contentType, MultivaluedMap<String, Object> headers) {
         try {
             responsePanel.clear();
-            setContentType(contentType);
+            responsePanel.setContentType(contentType);
             setResponse(response);
             setResponseHeaders(headers);
             responsePanel.showResponse();

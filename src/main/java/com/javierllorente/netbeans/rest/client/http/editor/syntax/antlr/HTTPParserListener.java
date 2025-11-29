@@ -108,15 +108,35 @@ public interface HTTPParserListener extends ParseTreeListener {
 	 */
 	void exitRequestBody(HTTPParser.RequestBodyContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link HTTPParser#jsonBodyContent}.
+	 * Enter a parse tree produced by {@link HTTPParser#bodyWithStarter}.
 	 * @param ctx the parse tree
 	 */
-	void enterJsonBodyContent(HTTPParser.JsonBodyContentContext ctx);
+	void enterBodyWithStarter(HTTPParser.BodyWithStarterContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link HTTPParser#jsonBodyContent}.
+	 * Exit a parse tree produced by {@link HTTPParser#bodyWithStarter}.
 	 * @param ctx the parse tree
 	 */
-	void exitJsonBodyContent(HTTPParser.JsonBodyContentContext ctx);
+	void exitBodyWithStarter(HTTPParser.BodyWithStarterContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link HTTPParser#bodyContent}.
+	 * @param ctx the parse tree
+	 */
+	void enterBodyContent(HTTPParser.BodyContentContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link HTTPParser#bodyContent}.
+	 * @param ctx the parse tree
+	 */
+	void exitBodyContent(HTTPParser.BodyContentContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link HTTPParser#directBodyContent}.
+	 * @param ctx the parse tree
+	 */
+	void enterDirectBodyContent(HTTPParser.DirectBodyContentContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link HTTPParser#directBodyContent}.
+	 * @param ctx the parse tree
+	 */
+	void exitDirectBodyContent(HTTPParser.DirectBodyContentContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link HTTPParser#jsonObject}.
 	 * @param ctx the parse tree
@@ -517,6 +537,36 @@ public interface HTTPParserListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitQueryContent(HTTPParser.QueryContentContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link HTTPParser#queryParam}.
+	 * @param ctx the parse tree
+	 */
+	void enterQueryParam(HTTPParser.QueryParamContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link HTTPParser#queryParam}.
+	 * @param ctx the parse tree
+	 */
+	void exitQueryParam(HTTPParser.QueryParamContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link HTTPParser#queryKey}.
+	 * @param ctx the parse tree
+	 */
+	void enterQueryKey(HTTPParser.QueryKeyContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link HTTPParser#queryKey}.
+	 * @param ctx the parse tree
+	 */
+	void exitQueryKey(HTTPParser.QueryKeyContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link HTTPParser#queryValue}.
+	 * @param ctx the parse tree
+	 */
+	void enterQueryValue(HTTPParser.QueryValueContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link HTTPParser#queryValue}.
+	 * @param ctx the parse tree
+	 */
+	void exitQueryValue(HTTPParser.QueryValueContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link HTTPParser#fragmentPart}.
 	 * @param ctx the parse tree

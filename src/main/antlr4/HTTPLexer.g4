@@ -26,8 +26,13 @@
 lexer grammar HTTPLexer;
 
 tokens { OPEN_BLOCK_BRAKET, CLOSE_BLOCK_BRAKET }
-    
-    WS: [ \t];
+
+WS: [ \t];
+
+// For JSON and text body - only consume newlines, not body content
+BODY_START_WITH_BLANK: ('\r'? '\n') WS* {_input.LA(1) == '{'}? -> pushMode(BODY_CONTENT);
+GENERIC_BODY_START: ('\r'? '\n') ('\r'? '\n') {_input.LA(1) >= 'a' && _input.LA(1) <= 'z' || _input.LA(1) == '<'}? -> pushMode(BODY_CONTENT);
+
 NEWLINE: ('\r'? '\n');
 REQUEST_SEPARATOR : '###' (~[\r\n])*;
 COMMENT: ('#' | '//') (~[\r\n])*;
@@ -143,18 +148,14 @@ ENV_VARIABLE : '{{' OPTIONAL_WS (ALPHA_CHARS DIGITS)* OPTIONAL_WS '}}';
 MULTIPART_BOUNDARY : '--'  (~[\r\n])* '-' '--';
 MULTIPART_PART      : '--'  (~[\r\n])* '-';
 
-// requestBody start
-// After requestLine/header consumed their NEWLINE:
-// „\n{" means blank line before body (correct)
-// „{" means no blank line before body (error, but we still enter JSON mode for recovery)
-BODY_START_WITH_BLANK: NEWLINE '{' -> pushMode(JSON);
-BODY_START_NO_BLANK: '{' -> pushMode(JSON);
+// Error case: Body without blank line - keep consuming '{'
+BODY_START_NO_BLANK: '{' -> pushMode(BODY_CONTENT);
 
 // Ignore everything else
 ERROR : .;
 
-// JSON-Mode: HTTP-Kewords are inactive here
-mode JSON;
+// BODY_CONTENT mode: Accepts JSON, text, HTML, XML, CSV, etc.
+mode BODY_CONTENT;
 
 JSON_LBRACE   : '{' -> type(OPEN_BLOCK_BRAKET) ;
 JSON_RBRACE   : '}' -> type(CLOSE_BLOCK_BRAKET), popMode ;
@@ -175,12 +176,12 @@ TRUE  : 'true' ;
 FALSE : 'false';
 NULL  : 'null' ;
 
+JSON_NEWLINE_SEPARATOR : ('\r'? '\n') WS* '###' (~[\r\n])* -> type(REQUEST_SEPARATOR), popMode;
 JSON_NEWLINE : ('\r'? '\n') -> type(NEWLINE);
 JSON_WS      : [ \t]+        -> type(WS);
 
-JSON_REQUEST_SEPARATOR
-    : '###' (~[\r\n])* -> type(REQUEST_SEPARATOR), popMode
-    ;
+// Generic body content for non-JSON bodies (text, HTML, XML, CSV, etc.)
+BODY_TEXT : ~[\r\n]+ ;
 
 JSON_EOF_CLEANUP
     : EOF -> popMode, type(EOF)

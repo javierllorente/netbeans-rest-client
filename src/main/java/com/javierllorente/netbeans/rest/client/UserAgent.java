@@ -15,6 +15,8 @@
  */
 package com.javierllorente.netbeans.rest.client;
 
+import org.openide.modules.Modules;
+
 /**
  *
  * @author Javier Llorente <javier@opensuse.org>
@@ -22,14 +24,30 @@ package com.javierllorente.netbeans.rest.client;
 public class UserAgent {
 
     public final static String NAME = "RestClient";
-    public final static String VERSION = "0.7.1";
-    public final static String FULL = NAME + "/" + VERSION 
-            + " (" + System.getProperty("os.name") + " " 
-            + System.getProperty("os.version") + "; " 
-            + System.getProperty("os.arch") + ") "
-            + System.getProperty("netbeans.productversion");
+    public final static String VERSION = getVersion();
+    public final static String FULL = NAME + "/" + VERSION
+        + " (" + System.getProperty("os.name") + " "
+        + System.getProperty("os.version") + "; "
+        + System.getProperty("os.arch") + ") "
+        + System.getProperty("netbeans.productversion");
 
     private UserAgent() {
     }
-    
+
+    private static String getVersion() {
+        var module = Modules.getDefault().ownerOf(UserAgent.class);
+
+        if (module == null) {
+            return "unknown";
+        }
+
+        var implementationVersion = module.getImplementationVersion();
+
+        if (implementationVersion == null) {
+            return "unknown";
+        }
+
+        return implementationVersion;
+    }
+
 }

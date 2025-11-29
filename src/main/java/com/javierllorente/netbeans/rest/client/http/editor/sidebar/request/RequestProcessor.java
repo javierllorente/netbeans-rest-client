@@ -24,6 +24,8 @@ import com.javierllorente.netbeans.rest.client.RestClient;
 import com.javierllorente.netbeans.rest.client.http.editor.sidebar.ResponseSidebarManager;
 import com.javierllorente.netbeans.rest.client.http.editor.syntax.antlr.HTTPLexer;
 import com.javierllorente.netbeans.rest.client.http.editor.syntax.antlr.HTTPParser;
+import com.javierllorente.netbeans.rest.client.ui.RestClientTopComponent;
+import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.core.MultivaluedMap;
 import java.util.ArrayList;
@@ -44,6 +46,7 @@ public class RequestProcessor implements IRequestProcessor {
     private final StyledDocument document;
     private final RestClient restClient;
     private JTextComponent textComponent;
+    private RestClientTopComponent restClientUi;
 
     public RequestProcessor(StyledDocument document) {
         this.currentRequests = new ArrayList<>();
@@ -56,7 +59,7 @@ public class RequestProcessor implements IRequestProcessor {
      * Set the text component for this processor. This is used to show responses
      * in the sidebar.
      */
-    public void setTextComponent(javax.swing.text.JTextComponent textComponent) {
+    public void setTextComponent(JTextComponent textComponent) {
         this.textComponent = textComponent;
     }
 
@@ -110,8 +113,47 @@ public class RequestProcessor implements IRequestProcessor {
             return;
         }
 
+        HTTPParser.RequestTargetContext requestTarget = requestLine.requestTarget();
+
+        if (requestTarget == null) {
+            return;
+        }
+
         this.restClient.setHeaders(getHeaders(requestContext.requestHeaders()));
         this.restClient.setBody(getBody(requestContext.requestBodySection()));
+
+        try {
+            String response = this.restClient.request(requestTarget.getText(), requestLine.METHOD() == null ? "GET" : requestLine.METHOD().getText());
+
+            // Show response in sidebar if textComponent is available
+            if (textComponent != null && response != null) {
+                String contentType = "";
+                var responseHeaders = this.restClient.getResponseHeaders();
+
+                if (responseHeaders != null && responseHeaders.containsKey("content-type")
+                    && !responseHeaders.get("content-type").isEmpty()) {
+                    contentType = (String) responseHeaders.get("content-type").get(0);
+                }
+
+                // Pass headers to sidebar
+                ResponseSidebarManager.getInstance().showResponse(textComponent, response, contentType, responseHeaders);
+            }
+        } catch (ProcessingException ex) {
+            ResponseSidebarManager.getInstance().showResponse(textComponent, ex.getMessage(), "", null);
+        }
+    }
+
+    @Override
+    public void openRequestInUi(HTTPParser.RequestContext requestContext) {
+        if (requestContext == null) {
+            return;
+        }
+
+        HTTPParser.RequestLineContext requestLine = requestContext.requestLine();
+
+        if (requestLine == null) {
+            return;
+        }
 
         HTTPParser.RequestTargetContext requestTarget = requestLine.requestTarget();
 
@@ -119,26 +161,25 @@ public class RequestProcessor implements IRequestProcessor {
             return;
         }
 
-        String response = this.restClient.request(requestTarget.getText(), requestLine.METHOD() == null ? "GET" : requestLine.METHOD().getText());
-
-        // Show response in sidebar if textComponent is available
-        if (textComponent != null && response != null) {
-            String contentType = "";
-            var responseHeaders = this.restClient.getResponseHeaders();
-
-            if (responseHeaders != null && responseHeaders.containsKey("content-type")
-                && !responseHeaders.get("content-type").isEmpty()) {
-                contentType = (String) responseHeaders.get("content-type").get(0);
-            }
-
-            // Pass headers to sidebar
-            ResponseSidebarManager.getInstance().showResponse(textComponent, response, contentType, responseHeaders);
+        String method = "GET"; // Default
+        if (requestLine.METHOD() != null) {
+            method = requestLine.METHOD().getText();
         }
-    }
 
-    @Override
-    public void openRequestInUi(HTTPParser.RequestContext request) {
-        // TODO: Open request in UI
+        this.restClient.setMethod(method);
+        this.restClient.setUri(requestTarget.getText());
+        this.restClient.setHeaders(getHeaders(requestContext.requestHeaders()));
+
+        String body = getBody(requestContext.requestBodySection());
+
+        if (body != null) {
+            restClient.setBodyType("Text");
+            this.restClient.setBody(body);
+        }
+
+        restClientUi = new RestClientTopComponent(this.restClient);
+        restClientUi.open();
+        restClientUi.requestActive();
     }
 
     private MultivaluedMap<String, String> getHeaders(HTTPParser.RequestHeadersContext requestHeadersContext) {
@@ -170,7 +211,12 @@ public class RequestProcessor implements IRequestProcessor {
                 break;
             }
 
-            headers.add(headerFieldNameContext.getText(), headerFieldValueContext.getText());
+            String key = headerFieldNameContext.getText();
+            String value = headerFieldValueContext.getText();
+
+            if (!headers.containsKey(key) || !headers.get(key).contains(value)) {
+                headers.add(key, value);
+            }
         }
 
         return headers;
@@ -187,12 +233,13 @@ public class RequestProcessor implements IRequestProcessor {
             return "";
         }
 
-        HTTPParser.JsonBodyContentContext jsonBodyContent = requestBody.jsonBodyContent();
-
-        if (jsonBodyContent == null) {
-            return "";
+        if (requestBody.bodyWithStarter() != null) {
+            HTTPParser.BodyContentContext bodyContent = requestBody.bodyWithStarter().bodyContent();
+            return bodyContent != null ? bodyContent.getText() : "";
+        } else if (requestBody.directBodyContent() != null) {
+            return requestBody.directBodyContent().getText();
         }
 
-        return jsonBodyContent.getText();
+        return "";
     }
 }
