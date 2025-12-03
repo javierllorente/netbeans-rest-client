@@ -22,7 +22,6 @@ package com.javierllorente.netbeans.rest.client.http.editor.sidebar;
 
 import com.javierllorente.netbeans.rest.client.http.editor.sidebar.request.IRequestProcessor;
 import com.javierllorente.netbeans.rest.client.http.editor.sidebar.request.Request;
-import com.javierllorente.netbeans.rest.client.http.editor.syntax.antlr.HTTPParser;
 import java.awt.event.ActionEvent;
 import javax.swing.Icon;
 import javax.swing.JMenuItem;
@@ -42,21 +41,25 @@ public class ActionPopup {
 
     public JPopupMenu createPopupMenu(Request request) {
         Icon runIcon = ImageUtilities.loadImageIcon("org/netbeans/modules/project/ui/resources/runProject.png", false);
+        Icon uiIcon = ImageUtilities.loadImageIcon("com/javierllorente/netbeans/rest/client/restservice.png", false);
 
         JPopupMenu popupMenu = new JPopupMenu();
-        JMenuItem runItem = new JMenuItem("Call '" + request.getRequestLineText(), runIcon);
 
+        // Call action
+        JMenuItem runItem = new JMenuItem("Call '" + request.getRequestLineText(), runIcon);
         runItem.addActionListener((ActionEvent e) -> {
             System.out.println("Call " + request.getRequestLineText());
-            executeItem(requestProcessor, request.getrequestContext(), false);  // Run task
+            requestProcessor.callRequest(request.getrequestContext());
         });
-
         popupMenu.add(runItem);
 
-        return popupMenu;
-    }
+        // Open in UI action
+        JMenuItem openInUIItem = new JMenuItem("Open in UI", uiIcon);
+        openInUIItem.addActionListener((ActionEvent e) -> {
+            requestProcessor.openRequestInUi(request.getrequestContext());
+        });
+        popupMenu.add(openInUIItem);
 
-    public static void executeItem(final IRequestProcessor taskProcessor, final HTTPParser.RequestContext requestContext, final boolean debug) {
-        taskProcessor.callRequest(requestContext);
+        return popupMenu;
     }
 }

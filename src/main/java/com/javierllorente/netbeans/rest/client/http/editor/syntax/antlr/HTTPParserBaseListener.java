@@ -137,13 +137,37 @@ public class HTTPParserBaseListener implements HTTPParserListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterJsonBodyContent(HTTPParser.JsonBodyContentContext ctx) { }
+	@Override public void enterBodyWithStarter(HTTPParser.BodyWithStarterContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitJsonBodyContent(HTTPParser.JsonBodyContentContext ctx) { }
+	@Override public void exitBodyWithStarter(HTTPParser.BodyWithStarterContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterBodyContent(HTTPParser.BodyContentContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitBodyContent(HTTPParser.BodyContentContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterDirectBodyContent(HTTPParser.DirectBodyContentContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitDirectBodyContent(HTTPParser.DirectBodyContentContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -624,6 +648,42 @@ public class HTTPParserBaseListener implements HTTPParserListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitQueryContent(HTTPParser.QueryContentContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterQueryParam(HTTPParser.QueryParamContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitQueryParam(HTTPParser.QueryParamContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterQueryKey(HTTPParser.QueryKeyContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitQueryKey(HTTPParser.QueryKeyContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterQueryValue(HTTPParser.QueryValueContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitQueryValue(HTTPParser.QueryValueContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
