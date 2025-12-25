@@ -15,7 +15,7 @@
  */
 package com.javierllorente.netbeans.rest.client.parsers;
 
-import com.javierllorente.netbeans.rest.client.Utils;
+import com.javierllorente.netbeans.rest.util.FormatUtils;
 import com.javierllorente.netbeans.rest.client.ui.RestClientTopComponent;
 import jakarta.json.Json;
 import jakarta.json.JsonArray;
@@ -139,7 +139,7 @@ public class PostmanUtilities {
                         .build())
                 .add("item", items.build())
                 .build();
-        Files.writeString(path, Utils.jsonPrettyFormat(json));
+        Files.writeString(path, FormatUtils.jsonPrettyFormat(json));
 
         return exported;
     }

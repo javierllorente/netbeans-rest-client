@@ -25,6 +25,7 @@ import com.javierllorente.netbeans.rest.client.http.editor.sidebar.ResponseSideb
 import com.javierllorente.netbeans.rest.client.http.editor.syntax.antlr.HTTPLexer;
 import com.javierllorente.netbeans.rest.client.http.editor.syntax.antlr.HTTPParser;
 import com.javierllorente.netbeans.rest.client.ui.RestClientTopComponent;
+import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.core.MultivaluedMap;
 import java.util.ArrayList;
@@ -121,20 +122,24 @@ public class RequestProcessor implements IRequestProcessor {
         this.restClient.setHeaders(getHeaders(requestContext.requestHeaders()));
         this.restClient.setBody(getBody(requestContext.requestBodySection()));
 
-        String response = this.restClient.request(requestTarget.getText(), requestLine.METHOD() == null ? "GET" : requestLine.METHOD().getText());
+        try {
+            String response = this.restClient.request(requestTarget.getText(), requestLine.METHOD() == null ? "GET" : requestLine.METHOD().getText());
 
-        // Show response in sidebar if textComponent is available
-        if (textComponent != null && response != null) {
-            String contentType = "";
-            var responseHeaders = this.restClient.getResponseHeaders();
+            // Show response in sidebar if textComponent is available
+            if (textComponent != null && response != null) {
+                String contentType = "";
+                var responseHeaders = this.restClient.getResponseHeaders();
 
-            if (responseHeaders != null && responseHeaders.containsKey("content-type")
-                && !responseHeaders.get("content-type").isEmpty()) {
-                contentType = (String) responseHeaders.get("content-type").get(0);
+                if (responseHeaders != null && responseHeaders.containsKey("content-type")
+                    && !responseHeaders.get("content-type").isEmpty()) {
+                    contentType = (String) responseHeaders.get("content-type").get(0);
+                }
+
+                // Pass headers to sidebar
+                ResponseSidebarManager.getInstance().showResponse(textComponent, response, contentType, responseHeaders);
             }
-
-            // Pass headers to sidebar
-            ResponseSidebarManager.getInstance().showResponse(textComponent, response, contentType, responseHeaders);
+        } catch (ProcessingException ex) {
+            ResponseSidebarManager.getInstance().showResponse(textComponent, ex.getMessage(), "", null);
         }
     }
 

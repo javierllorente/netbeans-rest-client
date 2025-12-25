@@ -15,17 +15,7 @@
  */
 package com.javierllorente.netbeans.rest.client.ui;
 
-import com.javierllorente.netbeans.rest.client.RestClient;
-import com.javierllorente.netbeans.rest.client.UserAgent;
-import com.javierllorente.netbeans.rest.client.event.CellDocumentListener;
-import com.javierllorente.netbeans.rest.client.event.TabChangeListener;
-import com.javierllorente.netbeans.rest.client.event.TableParamsListener;
-import com.javierllorente.netbeans.rest.client.event.TokenDocumentListener;
-import com.javierllorente.netbeans.rest.client.event.UrlDocumentListener;
-import com.javierllorente.netbeans.rest.client.parsers.CellParamsParser;
-import jakarta.ws.rs.HttpMethod;
-import jakarta.ws.rs.ProcessingException;
-import jakarta.ws.rs.core.MultivaluedMap;
+import com.javierllorente.netbeans.rest.util.ExceptionUtils;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -35,39 +25,40 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.beans.PropertyChangeEvent;
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.GroupLayout;
 import javax.swing.JButton;
-import javax.swing.JEditorPane;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.LayoutStyle;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentListener;
-import javax.swing.text.StyledDocument;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.settings.ConvertAsProperties;
-import org.openide.awt.ActionID;
-import org.openide.awt.ActionReference;
 import org.openide.awt.Mnemonics;
-import org.openide.cookies.EditorCookie;
-import org.openide.cookies.OpenCookie;
-import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
-import org.openide.loaders.DataObject;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.RequestProcessor;
 import org.openide.windows.TopComponent;
+
+import com.javierllorente.netbeans.rest.client.RestClient;
+import com.javierllorente.netbeans.rest.client.UserAgent;
+import com.javierllorente.netbeans.rest.client.event.CellDocumentListener;
+import com.javierllorente.netbeans.rest.client.event.TabChangeListener;
+import com.javierllorente.netbeans.rest.client.event.TableParamsListener;
+import com.javierllorente.netbeans.rest.client.event.TokenDocumentListener;
+import com.javierllorente.netbeans.rest.client.event.UrlDocumentListener;
+import com.javierllorente.netbeans.rest.client.parsers.CellParamsParser;
+import com.javierllorente.netbeans.rest.client.util.HttpFileUtils;
+
+import jakarta.ws.rs.HttpMethod;
+import jakarta.ws.rs.ProcessingException;
+import jakarta.ws.rs.core.MultivaluedMap;
 
 /**
  * Top component which displays something.
@@ -82,11 +73,6 @@ import org.openide.windows.TopComponent;
     persistenceType = TopComponent.PERSISTENCE_ONLY_OPENED
 )
 @TopComponent.Registration(mode = "editor", openAtStartup = false)
-@ActionID(category = "Window", id = "com.javierllorente.netbeans.rest.client.RestClientTopComponent")
-@ActionReference(path = "Menu/Tools", position = 805)
-@TopComponent.OpenActionRegistration(
-    displayName = "#CTL_RestClientTopComponent"
-)
 @Messages({
     "CTL_RestClientAction=REST Client",
     "CTL_RestClientTopComponent=REST Client",
@@ -370,16 +356,7 @@ public class RestClientTopComponent extends TopComponent {
                 updateResponsePanel(response, responseHeaders);
             } catch (ProcessingException ex) {
                 logger.warning(ex.getMessage());
-                String response = (ex.getMessage().contains("PKIX path building failed"))
-                    ? "Could not get response: failed to verify SSL certificate\n"
-                    + "SSL certificate verification is enabled. "
-                    + "You may disable it under Tools->Options->Miscellaneous->REST Client"
-                    : ex.getMessage();
-                SwingUtilities.invokeLater(() -> {
-                    responsePanel.setContentType("");
-                    responsePanel.setResponse(response);
-                    responsePanel.showResponse();
-                });
+                ExceptionUtils.handleAndDisplayProcessingException(ex, responsePanel);
             } finally {
                 progressHandle.finish();
                 setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
@@ -418,7 +395,7 @@ public class RestClientTopComponent extends TopComponent {
             String method = urlPanel.getRequestMethod();
             String url = urlPanel.getUrl();
 
-            httpContent.append(method).append(" ").append(url != null ? url : "").append("\n");
+            httpContent.append(method != null ? method : "GET").append(" ").append(url != null ? url : "").append("\n");
 
             // Add headers
             if (headersPanel.getRowCount() > 0) {
@@ -431,53 +408,21 @@ public class RestClientTopComponent extends TopComponent {
             }
 
             // Add body if present
-            if (!bodyPanel.getBodyType().equals("None")) {
+            String bodyType = bodyPanel.getBodyType();
+            if (bodyType != null && !bodyType.equals("None")) {
                 httpContent.append("\n");
                 httpContent.append(bodyPanel.getBody());
             }
 
             String httpText = httpContent.toString();
 
-            // Create .http file inside netbeans-rest-client folder in user directory
-            File userDir = new File(System.getProperty("user.home"), ".netbeans/netbeans-rest-client");
-            userDir.mkdirs();
-            String timestamp = new SimpleDateFormat("yyyyMMdd'T'HHmmss").format(new Date());
-            File httpFile = new File(userDir, "request-" + timestamp + ".http");
-            Files.writeString(httpFile.toPath(), httpText);
-
-            // Open the file in the editor
-            FileObject fileObject = FileUtil.toFileObject(httpFile);
-            if (fileObject != null) {
-                DataObject dataObject = DataObject.find(fileObject);
-                OpenCookie openCookie = dataObject.getLookup().lookup(OpenCookie.class);
-                EditorCookie editor = dataObject.getLookup().lookup(EditorCookie.class);
-
-                if (openCookie == null) {
-                    return;
-                }
-
-                openCookie.open();
-                editor.openDocument();
-
-                if (url == null || "".equals(url)) {
-                    final int caretOffset = method.length() + 1;
-
-                    SwingUtilities.invokeLater(() -> {
-                        StyledDocument doc = editor.getDocument();
-                        if (doc == null) {
-                            return;
-                        }
-
-                        JEditorPane[] panes = editor.getOpenedPanes();
-                        if (panes == null || panes.length == 0) {
-                            return;
-                        }
-
-                        int pos = Math.min(caretOffset, doc.getLength());
-                        panes[0].setCaretPosition(pos);
-                    });
-                }
+            // Calculate caret position (after method and space) if URL is empty
+            int caretPosition = -1;
+            if (url == null || url.isEmpty()) {
+                caretPosition = (method != null ? method.length() : 3) + 1;
             }
+
+            HttpFileUtils.createAndOpenHttpFile(httpText, caretPosition);
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
         }
