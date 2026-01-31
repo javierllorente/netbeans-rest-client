@@ -15,7 +15,20 @@
  */
 package com.javierllorente.netbeans.rest.client.ui;
 
+import com.javierllorente.netbeans.rest.client.RestClient;
+import com.javierllorente.netbeans.rest.client.RestClientInitializer;
+import com.javierllorente.netbeans.rest.client.UserAgent;
+import com.javierllorente.netbeans.rest.client.event.CellDocumentListener;
+import com.javierllorente.netbeans.rest.client.event.TabChangeListener;
+import com.javierllorente.netbeans.rest.client.event.TableParamsListener;
+import com.javierllorente.netbeans.rest.client.event.TokenDocumentListener;
+import com.javierllorente.netbeans.rest.client.event.UrlDocumentListener;
+import com.javierllorente.netbeans.rest.client.parsers.CellParamsParser;
+import com.javierllorente.netbeans.rest.client.util.HttpFileUtils;
 import com.javierllorente.netbeans.rest.util.ExceptionUtils;
+import jakarta.ws.rs.HttpMethod;
+import jakarta.ws.rs.ProcessingException;
+import jakarta.ws.rs.core.MultivaluedMap;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -45,20 +58,6 @@ import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.RequestProcessor;
 import org.openide.windows.TopComponent;
-
-import com.javierllorente.netbeans.rest.client.RestClient;
-import com.javierllorente.netbeans.rest.client.UserAgent;
-import com.javierllorente.netbeans.rest.client.event.CellDocumentListener;
-import com.javierllorente.netbeans.rest.client.event.TabChangeListener;
-import com.javierllorente.netbeans.rest.client.event.TableParamsListener;
-import com.javierllorente.netbeans.rest.client.event.TokenDocumentListener;
-import com.javierllorente.netbeans.rest.client.event.UrlDocumentListener;
-import com.javierllorente.netbeans.rest.client.parsers.CellParamsParser;
-import com.javierllorente.netbeans.rest.client.util.HttpFileUtils;
-
-import jakarta.ws.rs.HttpMethod;
-import jakarta.ws.rs.ProcessingException;
-import jakarta.ws.rs.core.MultivaluedMap;
 
 /**
  * Top component which displays something.
@@ -108,7 +107,7 @@ public class RestClientTopComponent extends TopComponent {
         paramsPanel.hideEnableColumn();
 
         if (this.client == null) {
-            this.client = new RestClient();
+            this.client = RestClientInitializer.createClient();
         }
 
         UrlDocumentListener urlDocumentListener = new UrlDocumentListener(paramsPanel);
@@ -324,42 +323,58 @@ public class RestClientTopComponent extends TopComponent {
     }
 
     private void request() {
-        logger.log(Level.INFO, "URL: {0}", urlPanel.getUrl());
+        // Capture all values from UI components on EDT before async execution
+        final String url = urlPanel.getUrl();
+        final String requestMethod = urlPanel.getRequestMethod();
+        final MultivaluedMap<String, String> headers = headersPanel.getRowCount() > 0
+            ? headersPanel.getValues() : null;
+        final String authType = authPanel.getAuthType();
+        final String username = authPanel.getUsername();
+        final String password = authPanel.getPassword();
+        final String bodyType = bodyPanel.getBodyType();
+        final String body = !bodyType.equals("None") ? bodyPanel.getBody() : "";
+
+        // Set wait cursor on EDT
+        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+
         processor.post(() -> {
-            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             ProgressHandle progressHandle = ProgressHandle.createHandle("Sending request");
             progressHandle.start();
 
-            if (headersPanel.getRowCount() > 0) {
-                MultivaluedMap<String, String> headers = headersPanel.getValues();
-                client.setHeaders(headers);
-            }
-
-            client.setAuthType(authPanel.getAuthType());
-            if (authPanel.getAuthType().equals(RestClient.BASIC_AUTH)) {
-                client.setCredentials(authPanel.getUsername(), authPanel.getPassword());
-            }
-
-            String body = "";
-            if (!bodyPanel.getBodyType().equals("None")) {
-                body = bodyPanel.getBody();
-            }
-            client.setBody(body);
-            client.setBodyType(bodyPanel.getBodyType());
-
             try {
-                String url = urlPanel.getUrl();
-                String response = client.request(url, urlPanel.getRequestMethod());
-                setUrl(client.getUri());
-                urlPanel.moveCaretToEnd();
+                if (headers != null) {
+                    client.setHeaders(headers);
+                }
+
+                client.setAuthType(authType);
+                if (authType.equals(RestClient.BASIC_AUTH)) {
+                    client.setCredentials(username, password);
+                }
+
+                client.setBody(body);
+                client.setBodyType(bodyType);
+
+                String response = client.request(url, requestMethod);
+                final String newUri = client.getUri();
                 MultivaluedMap<String, Object> responseHeaders = client.getResponseHeaders();
+
+                // Update UI on EDT
+                SwingUtilities.invokeLater(() -> {
+                    setUrl(newUri);
+                    urlPanel.moveCaretToEnd();
+                });
+
                 updateResponsePanel(response, responseHeaders);
             } catch (ProcessingException ex) {
                 logger.warning(ex.getMessage());
-                ExceptionUtils.handleAndDisplayProcessingException(ex, responsePanel);
+                SwingUtilities.invokeLater(() -> {
+                    ExceptionUtils.handleAndDisplayProcessingException(ex, responsePanel);
+                });
             } finally {
                 progressHandle.finish();
-                setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                SwingUtilities.invokeLater(() -> {
+                    setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                });
             }
 
         });

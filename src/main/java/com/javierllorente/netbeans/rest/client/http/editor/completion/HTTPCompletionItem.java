@@ -1,85 +1,133 @@
-// main/java/com/javierllorente/netbeans/rest/client/http/editor/completion/HTTPCompletionItem.java
+/*
+ * Copyright 2025 Christian Lenz <christian.lenz@gmx.net>.
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package com.javierllorente.netbeans.rest.client.http.editor.completion;
 
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.event.KeyEvent;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.SwingUtilities;
 import javax.swing.text.BadLocationException;
-import javax.swing.text.Document;
+import javax.swing.text.JTextComponent;
+import org.netbeans.api.editor.completion.Completion;
+import org.netbeans.editor.BaseDocument;
 import org.netbeans.spi.editor.completion.CompletionItem;
+import org.netbeans.spi.editor.completion.CompletionTask;
+import org.netbeans.spi.editor.completion.support.CompletionUtilities;
 
-// --- HTTPCompletionItem Placeholder ---
-// Use the actual HTTPCompletionItem class provided by the user
+/**
+ * Completion item for HTTP request elements.
+ */
 public class HTTPCompletionItem implements CompletionItem {
 
-    private static final Logger log = Logger.getLogger(HTTPCompletionItem.class.getName());
+    private static final Logger LOG = Logger.getLogger(HTTPCompletionItem.class.getName());
 
-    // ... (Implementation provided by user - IMPORTANT: ensure defaultAction is correct!) ...
     private final String text;
     private final int substituteOffset;
-    private final int substituteLength;
     private final String suffix;
+    private final boolean triggerNextCompletion;
+    private final boolean obsolete;
 
-    // Constructor updated to receive caretOffset
     public HTTPCompletionItem(String text, int anchor, String suffix, int caretOffset) {
+        this(text, anchor, suffix, caretOffset, false, false);
+    }
+
+    public HTTPCompletionItem(String text, int anchor, String suffix, int caretOffset, boolean triggerNextCompletion) {
+        this(text, anchor, suffix, caretOffset, triggerNextCompletion, false);
+    }
+
+    public HTTPCompletionItem(String text, int anchor, String suffix, int caretOffset, boolean triggerNextCompletion, boolean obsolete) {
         this.text = text;
         this.substituteOffset = anchor;
-        this.substituteLength = Math.max(0, caretOffset - anchor); // Ensure non-negative length
         this.suffix = suffix != null ? suffix : "";
+        this.triggerNextCompletion = triggerNextCompletion;
+        this.obsolete = obsolete;
     }
 
     @Override
-    public void defaultAction(javax.swing.text.JTextComponent component) {
-        // (Implementation provided by user - MUST correctly use substituteOffset/Length)
-        log.log(Level.INFO, String.format("Default action called for item: '%s', anchor: %d, caret: %d",
-            text, substituteOffset, substituteOffset + substituteLength)); // Log intended replacement range
-        try {
-            Document doc = component.getDocument();
-            // Use runAtomic for safety and undo support if possible in NetBeans context
-            // DocumentUtilities.runAtomic(doc, () -> { ... });
-            if (substituteLength > 0) {
-                doc.remove(substituteOffset, substituteLength);
+    public void defaultAction(JTextComponent component) {
+        if (component == null) {
+            return;
+        }
+
+        Completion.get().hideAll();
+
+        BaseDocument doc = (BaseDocument) component.getDocument();
+        String insertText = text + suffix;
+        int caretPos = component.getCaretPosition();
+        int removeLength = Math.max(0, caretPos - substituteOffset);
+
+        doc.runAtomic(() -> {
+            try {
+                if (removeLength > 0) {
+                    doc.remove(substituteOffset, removeLength);
+                }
+                doc.insertString(substituteOffset, insertText, null);
+            } catch (BadLocationException e) {
+                LOG.log(Level.WARNING, "Error during completion", e);
             }
-            doc.insertString(substituteOffset, text + suffix, null);
-            component.setCaretPosition(substituteOffset + text.length() + suffix.length()); // Caret after inserted text+suffix
-            org.netbeans.api.editor.completion.Completion.get().hideAll();
-        } catch (BadLocationException e) {
-            log.log(Level.SEVERE, "Error during completion item action", e);
+        });
+
+        component.setCaretPosition(substituteOffset + insertText.length());
+
+        if (triggerNextCompletion) {
+            SwingUtilities.invokeLater(() -> Completion.get().showCompletion());
         }
     }
 
-    // ... other CompletionItem methods (render, getSortText, etc.) ...
     @Override
-    public void processKeyEvent(java.awt.event.KeyEvent evt) {
+    public void processKeyEvent(KeyEvent evt) {
     }
 
     @Override
-    public int getPreferredWidth(java.awt.Graphics g, java.awt.Font font) {
-        return org.netbeans.spi.editor.completion.support.CompletionUtilities.getPreferredWidth(text, null, g, font);
+    public int getPreferredWidth(Graphics g, Font font) {
+        return CompletionUtilities.getPreferredWidth(text, null, g, font);
     }
 
     @Override
-    public void render(java.awt.Graphics g, java.awt.Font defaultFont, java.awt.Color defaultColor, java.awt.Color backgroundColor, int width, int height, boolean selected) {
-        org.netbeans.spi.editor.completion.support.CompletionUtilities.renderHtml(null, text, null, g, defaultFont, (selected ? java.awt.Color.WHITE : defaultColor), width, height, selected);
+    public void render(Graphics g, Font defaultFont, Color defaultColor, Color backgroundColor, int width, int height, boolean selected) {
+        String displayText = obsolete ? "<s>" + text + "</s>" : text;
+        CompletionUtilities.renderHtml(null, displayText, null, g, defaultFont, (selected ? Color.WHITE : defaultColor), width, height, selected);
     }
 
     @Override
-    public org.netbeans.spi.editor.completion.CompletionTask createDocumentationTask() {
+    public CompletionTask createDocumentationTask() {
         return null;
     }
 
     @Override
-    public org.netbeans.spi.editor.completion.CompletionTask createToolTipTask() {
+    public CompletionTask createToolTipTask() {
         return null;
     }
 
     @Override
-    public boolean instantSubstitution(javax.swing.text.JTextComponent component) {
+    public boolean instantSubstitution(JTextComponent component) {
         return false;
     }
 
     @Override
     public int getSortPriority() {
-        return 50;
+        return obsolete ? 100 : 50;
     }
 
     @Override
@@ -90,5 +138,5 @@ public class HTTPCompletionItem implements CompletionItem {
     @Override
     public CharSequence getInsertPrefix() {
         return text;
-    } // Just the main text usually
+    }
 }
