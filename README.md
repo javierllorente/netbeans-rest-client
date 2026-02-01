@@ -58,7 +58,12 @@ Open via **Tools → REST Client → Open in Editor**, or create any `.http` fil
 ## Screenshots
 
 <!-- TODO: Add screenshots -->
+UI Mode
+
 ![UI Mode](screenshots/ui-mode.png)
+
+HTTP Editor
+
 ![HTTP Editor](screenshots/http-editor.png)
 
 ## Requirements
