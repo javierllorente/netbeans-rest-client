@@ -193,6 +193,7 @@ public class RestClient {
 
     public String request(String resource, String method)
             throws ClientErrorException, ServerErrorException, ProcessingException {
+        resource = resource.trim();        
         if (resource.matches("^[a-zA-Z]+://.*")) {
             if (!(resource.startsWith("http://") || resource.startsWith("https://"))) {
                 throw new ProcessingException("Unsupported protocol");
