@@ -83,4 +83,4 @@ Apache License 2.0 — see [LICENSE](LICENSE).
 
 **Author:** [Javier Llorente](https://github.com/javierllorente)
 
-**Contributors:** Christian Lenz — HTTP file editor, syntax highlighting, code completion
+**Contributors:** [Christian Lenz](https://github.com/Chris2011) — HTTP file editor, syntax highlighting, code completion
