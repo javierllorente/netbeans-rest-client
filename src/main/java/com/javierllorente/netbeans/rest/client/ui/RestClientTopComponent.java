@@ -15,7 +15,6 @@
  */
 package com.javierllorente.netbeans.rest.client.ui;
 
-import com.javierllorente.netbeans.rest.util.ExceptionUtils;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -58,7 +57,6 @@ import com.javierllorente.netbeans.rest.client.parsers.CellParamsParser;
 import com.javierllorente.netbeans.rest.client.util.HttpFileUtils;
 
 import jakarta.ws.rs.HttpMethod;
-import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.core.MultivaluedMap;
 
 /**
@@ -348,19 +346,13 @@ public class RestClientTopComponent extends TopComponent {
             client.setBody(body);
             client.setBodyType(bodyPanel.getBodyType());
 
-            try {
-                String url = urlPanel.getUrl();
-                ResponseModel response = client.request(url, urlPanel.getRequestMethod());
-                setUrl(client.getUri());
-                urlPanel.moveCaretToEnd();
-                showResponse(response);
-            } catch (ProcessingException ex) {
-                logger.warning(ex.getMessage());
-                ExceptionUtils.handleAndDisplayProcessingException(ex, responsePanel);
-            } finally {
-                progressHandle.finish();
-                setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-            }
+            String url = urlPanel.getUrl();
+            ResponseModel response = client.request(url, urlPanel.getRequestMethod());
+            setUrl(client.getUri());
+            urlPanel.moveCaretToEnd();
+            showResponse(response);
+            progressHandle.finish();
+            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
 
         });
 

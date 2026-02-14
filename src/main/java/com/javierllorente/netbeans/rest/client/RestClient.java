@@ -17,10 +17,8 @@ package com.javierllorente.netbeans.rest.client;
 
 import com.javierllorente.netbeans.rest.client.ui.RestClientOptionsPanel;
 import jakarta.json.stream.JsonGenerator;
-import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.ProcessingException;
-import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Entity;
@@ -171,12 +169,11 @@ public class RestClient {
         return "URL: " + uri.toString() + ", status: " + status + ", time: " + time + " ms";
     }
 
-    public ResponseModel request(String resource, String method)
-            throws ClientErrorException, ServerErrorException, ProcessingException {
+    public ResponseModel request(String resource, String method) {
         resource = resource.trim();
         if (resource.matches("^[a-zA-Z]+://.*")) {
             if (!(resource.startsWith("http://") || resource.startsWith("https://"))) {
-                throw new ProcessingException("Unsupported protocol");
+                return new ResponseModel("Unsupported protocol");
             }
         } else {
             resource = "http://" + resource;
@@ -217,6 +214,14 @@ public class RestClient {
             response.bufferEntity();
             String responseBody = response.readEntity(String.class);
             responseModel = new ResponseModel(resource, status, statusText, responseBody, responseHeaders, elapsedTime);
+        } catch (ProcessingException ex) {
+            logger.warning(ex.getMessage());
+            String error = (ex.getMessage().contains("PKIX path building failed"))
+                    ? "Could not get response: failed to verify SSL certificate\n"
+                    + "SSL certificate verification is enabled. "
+                    + "You may disable it under Tools->Options->Miscellaneous->REST Client"
+                    : ex.getMessage();
+            return new ResponseModel(error);
         }
         
         return responseModel;

@@ -26,7 +26,6 @@ import com.javierllorente.netbeans.rest.client.http.editor.sidebar.ResponseSideb
 import com.javierllorente.netbeans.rest.client.http.editor.syntax.antlr.HTTPLexer;
 import com.javierllorente.netbeans.rest.client.http.editor.syntax.antlr.HTTPParser;
 import com.javierllorente.netbeans.rest.client.ui.RestClientTopComponent;
-import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.core.MultivaluedMap;
 import java.util.ArrayList;
@@ -123,17 +122,13 @@ public class RequestProcessor implements IRequestProcessor {
         this.restClient.setHeaders(getHeaders(requestContext.requestHeaders()));
         this.restClient.setBody(getBody(requestContext.requestBodySection()));
 
-        try {
-            ResponseModel response = this.restClient.request(requestTarget.getText(), requestLine.METHOD() == null ? "GET" : requestLine.METHOD().getText());
+        ResponseModel response = this.restClient.request(requestTarget.getText(), requestLine.METHOD() == null ? "GET" : requestLine.METHOD().getText());
 
-            // Show response in sidebar if textComponent is available
-            if (textComponent != null && response != null) {
+        // Show response in sidebar if textComponent is available
+        if (textComponent != null && response != null) {
 
-                // Pass headers to sidebar
-                ResponseSidebarManager.getInstance().showResponse(textComponent, response);
-            }
-        } catch (ProcessingException ex) {
-            ResponseSidebarManager.getInstance().showResponse(textComponent, new ResponseModel(ex.getMessage()));
+            // Pass headers to sidebar
+            ResponseSidebarManager.getInstance().showResponse(textComponent, response);
         }
     }
 
