@@ -122,26 +122,6 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.15</version>
             </plugin>
-            <plugin>
-              <groupId>org.antlr</groupId>
-              <artifactId>antlr4-maven-plugin</artifactId>
-              <version>4.13.2</version>
-              <executions>
-                <execution>
-                  <id>antlr</id>
-                  <goals>
-                    <goal>antlr4</goal>
-                  </goals>
-                  <configuration>
-                    <outputDirectory>${basedir}/src/main/java/com/javierllorente/netbeans/rest/client/http/editor/syntax/antlr</outputDirectory>
-                    <arguments>
-                        <argument>-package</argument>
-                        <argument>com.javierllorente.netbeans.rest.client.http.editor.syntax.antlr</argument>
-                    </arguments>
-                  </configuration>
-                </execution>
-              </executions>
-            </plugin>
         </plugins>
     </build>
     <dependencies>
