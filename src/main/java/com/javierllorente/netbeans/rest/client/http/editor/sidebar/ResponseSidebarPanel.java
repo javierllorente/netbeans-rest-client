@@ -20,8 +20,8 @@
  */
 package com.javierllorente.netbeans.rest.client.http.editor.sidebar;
 
+import com.javierllorente.netbeans.rest.client.ResponseModel;
 import com.javierllorente.netbeans.rest.client.ui.ResponsePanel;
-import jakarta.ws.rs.core.MultivaluedMap;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
@@ -30,8 +30,6 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.List;
-import java.util.Map;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JPanel;
@@ -139,26 +137,6 @@ public class ResponseSidebarPanel extends JPanel {
         return Math.max(min, Math.min(max, v));
     }
 
-    /**
-     * Set response headers for display.
-     */
-    public void setResponseHeaders(MultivaluedMap<String, Object> headers) {
-        if (headers != null) {
-            for (Map.Entry<String, List<Object>> entry : headers.entrySet()) {
-                String key = entry.getKey();
-                String val = entry.getValue().toString();
-                responsePanel.addHeader(key, val);
-            }
-        }
-    }
-
-    /**
-     * Set the response content (raw).
-     */
-    public void setResponse(String response) {
-        responsePanel.setResponse(response);
-    }
-
     @Override
     public void setVisible(boolean visible) {
         try {
@@ -207,13 +185,10 @@ public class ResponseSidebarPanel extends JPanel {
     /**
      * Show the sidebar with the given response and headers.
      */
-    public void showResponse(String response, String contentType, MultivaluedMap<String, Object> headers) {
+    public void showResponse(ResponseModel response) {
         try {
             responsePanel.clear();
-            responsePanel.setContentType(contentType);
-            setResponse(response);
-            setResponseHeaders(headers);
-            responsePanel.showResponse();
+            responsePanel.showResponse(response);
             setVisible(true);
             revalidate();
             repaint();

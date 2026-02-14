@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2025 Javier Llorente <javier@opensuse.org>.
+ * Copyright 2022-2026 Javier Llorente <javier@opensuse.org>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ import org.openide.util.RequestProcessor;
 import org.openide.windows.TopComponent;
 
 import com.javierllorente.netbeans.rest.client.RestClient;
+import com.javierllorente.netbeans.rest.client.ResponseModel;
 import com.javierllorente.netbeans.rest.client.UserAgent;
 import com.javierllorente.netbeans.rest.client.event.CellDocumentListener;
 import com.javierllorente.netbeans.rest.client.event.TabChangeListener;
@@ -349,11 +350,10 @@ public class RestClientTopComponent extends TopComponent {
 
             try {
                 String url = urlPanel.getUrl();
-                String response = client.request(url, urlPanel.getRequestMethod());
+                ResponseModel response = client.request(url, urlPanel.getRequestMethod());
                 setUrl(client.getUri());
                 urlPanel.moveCaretToEnd();
-                MultivaluedMap<String, Object> responseHeaders = client.getResponseHeaders();
-                updateResponsePanel(response, responseHeaders);
+                showResponse(response);
             } catch (ProcessingException ex) {
                 logger.warning(ex.getMessage());
                 ExceptionUtils.handleAndDisplayProcessingException(ex, responsePanel);
@@ -366,25 +366,9 @@ public class RestClientTopComponent extends TopComponent {
 
     }
 
-    private void updateResponsePanel(String response, MultivaluedMap<String, Object> responseHeaders) {
+    private void showResponse(ResponseModel response) {
         SwingUtilities.invokeLater(() -> {
-
-            String contentType = "";
-            if (responseHeaders.containsKey("content-type") && !responseHeaders.get("content-type").isEmpty()) {
-                contentType = (String) responseHeaders.get("content-type").get(0);
-            }
-            responsePanel.setContentType(contentType);
-
-            responsePanel.setResponse(response);
-            responsePanel.showResponse();
-            responsePanel.setStatus("Status: " + client.getStatus() + " " + client.getStatusText()
-                + "  Time: " + client.getElapsedTime() + " ms");
-
-            for (Map.Entry<String, List<Object>> entry : responseHeaders.entrySet()) {
-                String key = entry.getKey();
-                String val = entry.getValue().toString();
-                responsePanel.addHeader(key, val);
-            }
+            responsePanel.showResponse(response);
         });
     }
 

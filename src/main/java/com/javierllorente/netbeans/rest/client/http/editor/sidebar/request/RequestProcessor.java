@@ -21,6 +21,7 @@
 package com.javierllorente.netbeans.rest.client.http.editor.sidebar.request;
 
 import com.javierllorente.netbeans.rest.client.RestClient;
+import com.javierllorente.netbeans.rest.client.ResponseModel;
 import com.javierllorente.netbeans.rest.client.http.editor.sidebar.ResponseSidebarManager;
 import com.javierllorente.netbeans.rest.client.http.editor.syntax.antlr.HTTPLexer;
 import com.javierllorente.netbeans.rest.client.http.editor.syntax.antlr.HTTPParser;
@@ -123,23 +124,16 @@ public class RequestProcessor implements IRequestProcessor {
         this.restClient.setBody(getBody(requestContext.requestBodySection()));
 
         try {
-            String response = this.restClient.request(requestTarget.getText(), requestLine.METHOD() == null ? "GET" : requestLine.METHOD().getText());
+            ResponseModel response = this.restClient.request(requestTarget.getText(), requestLine.METHOD() == null ? "GET" : requestLine.METHOD().getText());
 
             // Show response in sidebar if textComponent is available
             if (textComponent != null && response != null) {
-                String contentType = "";
-                var responseHeaders = this.restClient.getResponseHeaders();
-
-                if (responseHeaders != null && responseHeaders.containsKey("content-type")
-                    && !responseHeaders.get("content-type").isEmpty()) {
-                    contentType = (String) responseHeaders.get("content-type").get(0);
-                }
 
                 // Pass headers to sidebar
-                ResponseSidebarManager.getInstance().showResponse(textComponent, response, contentType, responseHeaders);
+                ResponseSidebarManager.getInstance().showResponse(textComponent, response);
             }
         } catch (ProcessingException ex) {
-            ResponseSidebarManager.getInstance().showResponse(textComponent, ex.getMessage(), "", null);
+            ResponseSidebarManager.getInstance().showResponse(textComponent, new ResponseModel(ex.getMessage()));
         }
     }
 

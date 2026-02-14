@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Javier Llorente <javier@opensuse.org>.
+ * Copyright 2025-2026 Javier Llorente <javier@opensuse.org>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.javierllorente.netbeans.rest.util;
 
+import com.javierllorente.netbeans.rest.client.ResponseModel;
 import com.javierllorente.netbeans.rest.client.ui.ResponsePanel;
 import jakarta.ws.rs.ProcessingException;
 import javax.swing.SwingUtilities;
@@ -29,15 +30,13 @@ public class ExceptionUtils {
     }    
 
     public static void handleAndDisplayProcessingException(ProcessingException ex, ResponsePanel responsePanel) {
-        String response = (ex.getMessage().contains("PKIX path building failed"))
+        String error = (ex.getMessage().contains("PKIX path building failed"))
                 ? "Could not get response: failed to verify SSL certificate\n"
                 + "SSL certificate verification is enabled. "
                 + "You may disable it under Tools->Options->Miscellaneous->REST Client"
                 : ex.getMessage();
         SwingUtilities.invokeLater(() -> {
-            responsePanel.setContentType("");
-            responsePanel.setResponse(response);
-            responsePanel.showResponse();
+            responsePanel.showResponse(new ResponseModel(error));
         });
     }
     
