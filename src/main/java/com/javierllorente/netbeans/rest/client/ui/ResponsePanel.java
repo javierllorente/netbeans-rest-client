@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2025 Javier Llorente <javier@opensuse.org>.
+ * Copyright 2022-2026 Javier Llorente <javier@opensuse.org>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.javierllorente.netbeans.rest.client.ui;
 
+import com.javierllorente.netbeans.rest.client.ResponseModel;
 import com.javierllorente.netbeans.rest.util.FormatUtils;
 import com.javierllorente.netbeans.rest.client.editor.RestMediaType;
 import jakarta.json.Json;
@@ -28,6 +29,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.nio.file.Files;
+import java.util.List;
+import java.util.Map;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -54,7 +57,7 @@ public class ResponsePanel extends JPanel {
     private final LineNumberComponent lineNumberComponent;
     private final JButton previewButton;
     private String mimePath = MediaType.TEXT_PLAIN;
-    private String response;
+    private ResponseModel response;
 
     public ResponsePanel() {
         super(new BorderLayout());
@@ -75,7 +78,7 @@ public class ResponsePanel extends JPanel {
         prettyButton = new JToggleButton("Pretty", true);
         JToggleButton rawButton = new JToggleButton("Raw", false);
         prettyButton.addItemListener((ie) -> {
-            showResponse();
+            renderResponse();
         });
 
         ButtonGroup formatGroup = new ButtonGroup();
@@ -119,7 +122,7 @@ public class ResponsePanel extends JPanel {
 
     }
 
-    public void setContentType(String contentType) {
+    private void setContentType(String contentType) {
         mimePath = MediaType.TEXT_PLAIN;
         if (contentType.startsWith(MediaType.APPLICATION_XML)) {
             mimePath = RestMediaType.XML;
@@ -135,12 +138,21 @@ public class ResponsePanel extends JPanel {
         previewButton.setVisible(mimePath.equals(MediaType.TEXT_HTML));
     }
 
-    public void setResponse(String response) {
+    public void showResponse(ResponseModel response) {
         this.response = response;
+        setContentType(response.getContentType());
+        if (response.getStatus() != null) {
+            setStatus("Status: " + response.getStatus() + " " + response.getStatusText()
+                    + "  Time: " + response.getElapsedTimeMs()+ " ms");
+        } else {
+            clearStatus();
+        }
+        populateHeaders();
+        renderResponse();
     }
 
     private String formatResponse() {
-        String prettyOrNotResponse = response;
+        String prettyOrNotResponse = response.getBody();
         if (prettyButton.isSelected()) {
             switch (mimePath) {
                 case RestMediaType.JSON:
@@ -162,17 +174,17 @@ public class ResponsePanel extends JPanel {
         return prettyOrNotResponse;
     }
 
-    public void showResponse() {
+    private void renderResponse() {
         String prettyOrNotResponse = formatResponse();
         responseEditorPane.setText(prettyOrNotResponse);
         responseEditorPane.setCaretPosition(0);
     }
-
+    
     /**
      * Render HTML response in system browser.
      */
     private void renderHtml() {
-        if (response == null || response.isEmpty()) {
+        if (response == null || response.getBody().isEmpty()) {
             JOptionPane.showMessageDialog(this, "No HTML content to render", "Info", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
@@ -181,7 +193,7 @@ public class ResponsePanel extends JPanel {
             // Create temporary HTML file
             File tempFile = File.createTempFile("rest-response-", ".html");
             tempFile.deleteOnExit();
-            Files.writeString(tempFile.toPath(), response);
+            Files.writeString(tempFile.toPath(), response.getBody());
 
             // Open in default browser
             if (Desktop.isDesktopSupported()) {
@@ -194,26 +206,31 @@ public class ResponsePanel extends JPanel {
         }
     }
 
-    public void clearResponse() {
+    private void clearResponse() {
         responseEditorPane.setText("");
         responseEditorPane.setCaretPosition(0);
     }
 
-    public void addHeader(String key, String value) {
-        responseHeadersTable.addRow(key, value);
-    }
-
-    public void clearHeadersTable() {
+    private void clearHeadersTable() {
         responseHeadersTable.removeAllRows();
     }
 
-    public void setStatus(String status) {
+    private void setStatus(String status) {
         statusLabel.setText(status);
         revalidate();
         repaint();
     }
+    
+    private void populateHeaders() {
+        responseHeadersTable.removeAllRows();
+        for (Map.Entry<String, List<Object>> entry : response.getHeaders().entrySet()) {
+            String key = entry.getKey();
+            String value = entry.getValue().toString();
+            responseHeadersTable.addRow(key, value);
+        }
+    }
 
-    public void clearStatus() {
+    private void clearStatus() {
         statusLabel.setText("");
         revalidate();
         repaint();

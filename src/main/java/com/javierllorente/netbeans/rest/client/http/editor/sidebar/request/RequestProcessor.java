@@ -20,6 +20,7 @@
  */
 package com.javierllorente.netbeans.rest.client.http.editor.sidebar.request;
 
+import com.javierllorente.netbeans.rest.client.ResponseModel;
 import com.javierllorente.netbeans.rest.client.RestClient;
 import com.javierllorente.netbeans.rest.client.RestClientInitializer;
 import com.javierllorente.netbeans.rest.client.http.editor.sidebar.ResponseSidebarManager;
@@ -140,30 +141,18 @@ public class RequestProcessor implements IRequestProcessor {
                 this.restClient.setHeaders(headers);
                 this.restClient.setBody(body);
 
-                String response = this.restClient.request(url, method);
+                ResponseModel response = this.restClient.request(url, method);
 
                 // Show response in sidebar if textComponent is available (update on EDT)
                 if (tc != null && response != null) {
-                    String contentType = "";
-                    var responseHeaders = this.restClient.getResponseHeaders();
-
-                    if (responseHeaders != null && responseHeaders.containsKey("content-type")
-                        && !responseHeaders.get("content-type").isEmpty()) {
-                        contentType = (String) responseHeaders.get("content-type").get(0);
-                    }
-
-                    // Capture for lambda
-                    final String finalContentType = contentType;
-                    final String finalResponse = response;
-                    final var finalResponseHeaders = responseHeaders;
-
+                    // Pass headers to sidebar
                     SwingUtilities.invokeLater(() -> {
-                        ResponseSidebarManager.getInstance().showResponse(tc, finalResponse, finalContentType, finalResponseHeaders);
+                        ResponseSidebarManager.getInstance().showResponse(tc, response);
                     });
                 }
             } catch (ProcessingException ex) {
                 SwingUtilities.invokeLater(() -> {
-                    ResponseSidebarManager.getInstance().showResponse(tc, ex.getMessage(), "", null);
+                    ResponseSidebarManager.getInstance().showResponse(tc, new ResponseModel(ex.getMessage()));
                 });
             } finally {
                 progressHandle.finish();

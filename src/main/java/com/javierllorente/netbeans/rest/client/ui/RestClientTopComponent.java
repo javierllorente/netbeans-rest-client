@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2025 Javier Llorente <javier@opensuse.org>.
+ * Copyright 2022-2026 Javier Llorente <javier@opensuse.org>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.javierllorente.netbeans.rest.client.ui;
 
+import com.javierllorente.netbeans.rest.client.ResponseModel;
 import com.javierllorente.netbeans.rest.client.RestClient;
 import com.javierllorente.netbeans.rest.client.RestClientInitializer;
 import com.javierllorente.netbeans.rest.client.UserAgent;
@@ -25,7 +26,6 @@ import com.javierllorente.netbeans.rest.client.event.TokenDocumentListener;
 import com.javierllorente.netbeans.rest.client.event.UrlDocumentListener;
 import com.javierllorente.netbeans.rest.client.parsers.CellParamsParser;
 import com.javierllorente.netbeans.rest.client.util.HttpFileUtils;
-import com.javierllorente.netbeans.rest.util.ExceptionUtils;
 import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.core.MultivaluedMap;
@@ -229,8 +229,7 @@ public class RestClientTopComponent extends TopComponent {
         // TODO add custom code on component closing
     }
 
-    void writeProperties(java.util.Properties p) {
-
+    public void writeProperties(java.util.Properties p) {
         p.setProperty(VERSION_PROPERTY, "1.0");
         p.setProperty(REQUEST_METHOD_PROPERTY, urlPanel.getRequestMethod());
         p.setProperty(URL_PROPERTY, urlPanel.getUrl());
@@ -239,7 +238,7 @@ public class RestClientTopComponent extends TopComponent {
         p.setProperty(HEADERS_PROPERTY, headersPanel.getValuesString());
     }
 
-    void readProperties(java.util.Properties p) {
+    public void readProperties(java.util.Properties p) {
 //        String version = p.getProperty(VERSION_PROPERTY);
         String url = p.getProperty(URL_PROPERTY);
 
@@ -354,9 +353,8 @@ public class RestClientTopComponent extends TopComponent {
                 client.setBody(body);
                 client.setBodyType(bodyType);
 
-                String response = client.request(url, requestMethod);
+                ResponseModel response = client.request(url, requestMethod);
                 final String newUri = client.getUri();
-                MultivaluedMap<String, Object> responseHeaders = client.getResponseHeaders();
 
                 // Update UI on EDT
                 SwingUtilities.invokeLater(() -> {
@@ -364,12 +362,9 @@ public class RestClientTopComponent extends TopComponent {
                     urlPanel.moveCaretToEnd();
                 });
 
-                updateResponsePanel(response, responseHeaders);
+                showResponse(response);
             } catch (ProcessingException ex) {
                 logger.warning(ex.getMessage());
-                SwingUtilities.invokeLater(() -> {
-                    ExceptionUtils.handleAndDisplayProcessingException(ex, responsePanel);
-                });
             } finally {
                 progressHandle.finish();
                 SwingUtilities.invokeLater(() -> {
@@ -381,25 +376,9 @@ public class RestClientTopComponent extends TopComponent {
 
     }
 
-    private void updateResponsePanel(String response, MultivaluedMap<String, Object> responseHeaders) {
+    private void showResponse(ResponseModel response) {
         SwingUtilities.invokeLater(() -> {
-
-            String contentType = "";
-            if (responseHeaders.containsKey("content-type") && !responseHeaders.get("content-type").isEmpty()) {
-                contentType = (String) responseHeaders.get("content-type").get(0);
-            }
-            responsePanel.setContentType(contentType);
-
-            responsePanel.setResponse(response);
-            responsePanel.showResponse();
-            responsePanel.setStatus("Status: " + client.getStatus() + " " + client.getStatusText()
-                + "  Time: " + client.getElapsedTime() + " ms");
-
-            for (Map.Entry<String, List<Object>> entry : responseHeaders.entrySet()) {
-                String key = entry.getKey();
-                String val = entry.getValue().toString();
-                responsePanel.addHeader(key, val);
-            }
+            responsePanel.showResponse(response);
         });
     }
 

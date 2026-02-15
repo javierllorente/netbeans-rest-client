@@ -20,7 +20,7 @@
  */
 package com.javierllorente.netbeans.rest.client.http.editor.sidebar;
 
-import jakarta.ws.rs.core.MultivaluedMap;
+import com.javierllorente.netbeans.rest.client.ResponseModel;
 import java.util.WeakHashMap;
 import javax.swing.SwingUtilities;
 import javax.swing.text.JTextComponent;
@@ -54,25 +54,12 @@ public class ResponseSidebarManager {
     }
 
     /**
-     * Show a response in the sidebar for the given text component.
-     *
-     * @param textComponent The editor component
-     * @param response The response content
-     * @param contentType The content type (e.g., "application/json")
-     */
-    public void showResponse(JTextComponent textComponent, String response, String contentType) {
-        showResponse(textComponent, response, contentType, null);
-    }
-
-    /**
      * Show a response in the sidebar for the given text component with headers.
      *
      * @param textComponent The editor component
      * @param response The response content
-     * @param contentType The content type (e.g., "application/json")
-     * @param headers The response headers
      */
-    public void showResponse(JTextComponent textComponent, String response, String contentType, MultivaluedMap<String, Object> headers) {
+    public void showResponse(JTextComponent textComponent, ResponseModel response) {
         if (textComponent == null) {
             return;
         }
@@ -82,7 +69,7 @@ public class ResponseSidebarManager {
             ResponseSidebarPanel panel = sidebars.get(textComponent);
             if (panel != null) {
                 try {
-                    panel.showResponse(response, contentType, headers);
+                    panel.showResponse(response);
                 } catch (Exception e) {
                     // Log but don't propagate exceptions
                     System.err.println("Error showing response in sidebar: " + e.getMessage());

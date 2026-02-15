@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2025 Javier Llorente <javier@opensuse.org>.
+ * Copyright 2022-2026 Javier Llorente <javier@opensuse.org>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,8 @@ package com.javierllorente.netbeans.rest.client;
 
 import com.javierllorente.netbeans.rest.client.ui.RestClientOptionsPanel;
 import jakarta.json.stream.JsonGenerator;
-import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.ProcessingException;
-import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Entity;
@@ -69,10 +67,6 @@ public class RestClient {
     private MultivaluedMap<String, String> headers;
     private String body;
     private String bodyType;
-    private MultivaluedMap<String, Object> responseHeaders;
-    private int status;
-    private String statusText;
-    private long elapsedTime;
 
     public RestClient() {
         Preferences preferences = NbPreferences.forModule(RestClientOptionsPanel.class);
@@ -171,31 +165,15 @@ public class RestClient {
         return this.bodyType;
     }
 
-    public MultivaluedMap<String, Object> getResponseHeaders() {
-        return responseHeaders;
-    }
-    
-    public int getStatus() {
-        return status;
-    }
-
-    public String getStatusText() {
-        return statusText;
-    }
-
-    public long getElapsedTime() {
-        return elapsedTime;
-    }
-
     private String getConnectionInfo(URI uri, int status, long time) {
         return "URL: " + uri.toString() + ", status: " + status + ", time: " + time + " ms";
     }
 
-    public String request(String resource, String method)
-            throws ClientErrorException, ServerErrorException, ProcessingException {
+    public ResponseModel request(String resource, String method) {
+        resource = resource.trim();
         if (resource.matches("^[a-zA-Z]+://.*")) {
             if (!(resource.startsWith("http://") || resource.startsWith("https://"))) {
-                throw new ProcessingException("Unsupported protocol");
+                return new ResponseModel("Unsupported protocol");
             }
         } else {
             resource = "http://" + resource;
@@ -224,20 +202,29 @@ public class RestClient {
             setRequestHeaders(invocationBuilder);
         }    
         
-        String str;
+        ResponseModel responseModel;
         try (Response response = invoke(invocationBuilder, method)) {
             long endTime = System.currentTimeMillis();
-            elapsedTime = endTime - startTime;
-            status = response.getStatus();
-            statusText = response.getStatusInfo().toEnum().toString();
+            long elapsedTime = endTime - startTime;
+            int status = response.getStatus();
+            String statusText = response.getStatusInfo().toEnum().toString();
             logger.info(getConnectionInfo(target.getUri(), status, elapsedTime));
 
-            responseHeaders = response.getHeaders();
+            MultivaluedMap<String, Object> responseHeaders = response.getHeaders();
             response.bufferEntity();
-            str = response.readEntity(String.class);
+            String responseBody = response.readEntity(String.class);
+            responseModel = new ResponseModel(resource, status, statusText, responseBody, responseHeaders, elapsedTime);
+        } catch (ProcessingException ex) {
+            logger.warning(ex.getMessage());
+            String error = (ex.getMessage().contains("PKIX path building failed"))
+                    ? "Could not get response: failed to verify SSL certificate\n"
+                    + "SSL certificate verification is enabled. "
+                    + "You may disable it under Tools->Options->Miscellaneous->REST Client"
+                    : ex.getMessage();
+            return new ResponseModel(error);
         }
         
-        return str;
+        return responseModel;
     }
     
     private Response invoke(Invocation.Builder invocationBuilder, String method) {
