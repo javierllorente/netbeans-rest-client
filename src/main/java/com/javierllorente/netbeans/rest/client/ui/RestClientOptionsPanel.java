@@ -15,16 +15,19 @@
  */
 package com.javierllorente.netbeans.rest.client.ui;
 
-import com.javierllorente.netbeans.rest.client.parsers.PostmanUtilities;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileNameExtensionFilter;
+
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.util.Exceptions;
 import org.openide.util.NbPreferences;
+
+import com.javierllorente.netbeans.rest.client.parsers.PostmanUtilities;
 
 public final class RestClientOptionsPanel extends javax.swing.JPanel {
 
@@ -90,6 +93,7 @@ public final class RestClientOptionsPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addComponent(verifySslCertsCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(postmanCollectionsLabel)
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
