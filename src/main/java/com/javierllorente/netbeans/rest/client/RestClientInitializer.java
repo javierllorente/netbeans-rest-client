@@ -20,9 +20,6 @@
  */
 package com.javierllorente.netbeans.rest.client;
 
-import jakarta.ws.rs.ClientErrorException;
-import jakarta.ws.rs.ProcessingException;
-import jakarta.ws.rs.ServerErrorException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.openide.modules.ModuleInstall;
@@ -41,13 +38,9 @@ public class RestClientInitializer extends ModuleInstall {
         Thread warmupThread = new Thread(() -> {
             long startTime = System.currentTimeMillis();
 
-            try {
-                logger.info("RestClient warmup starting...");
-                RestClient client = new RestClient();
-                client.request("http://127.0.0.1:1/warmup", "GET");
-            } catch (ClientErrorException | ProcessingException | ServerErrorException ignored) {
-                // Expected to fail - we just want to warm up the HTTP stack
-            }
+            logger.info("RestClient warmup starting...");
+            RestClient client = new RestClient();
+            client.request("http://127.0.0.1:1/warmup", "GET");
 
             long elapsed = System.currentTimeMillis() - startTime;
             logger.log(Level.INFO, "RestClient warmup completed in {0} ms", elapsed);

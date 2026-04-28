@@ -27,7 +27,6 @@ import com.javierllorente.netbeans.rest.client.event.UrlDocumentListener;
 import com.javierllorente.netbeans.rest.client.parsers.CellParamsParser;
 import com.javierllorente.netbeans.rest.client.util.HttpFileUtils;
 import jakarta.ws.rs.HttpMethod;
-import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.core.MultivaluedMap;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -363,8 +362,6 @@ public class RestClientTopComponent extends TopComponent {
                 });
 
                 showResponse(response);
-            } catch (ProcessingException ex) {
-                logger.warning(ex.getMessage());
             } finally {
                 progressHandle.finish();
                 SwingUtilities.invokeLater(() -> {
