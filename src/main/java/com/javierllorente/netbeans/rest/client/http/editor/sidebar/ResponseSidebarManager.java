@@ -58,8 +58,6 @@ public class ResponseSidebarManager {
      *
      * @param textComponent The editor component
      * @param response The response content
-     * @param contentType The content type (e.g., "application/json")
-     * @param headers The response headers
      */
     public void showResponse(JTextComponent textComponent, ResponseModel response) {
         if (textComponent == null) {

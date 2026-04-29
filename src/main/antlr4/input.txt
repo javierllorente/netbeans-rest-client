@@ -1,0 +1,11 @@
+GET /index.html HTTP/1.1
+###
+GET /folder/ HTTP/1.1
+a:d
+###
+GET twitter.com
+d:d
+
+{
+    "d":3
+}

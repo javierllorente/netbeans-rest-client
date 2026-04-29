@@ -20,8 +20,9 @@
  */
 package com.javierllorente.netbeans.rest.client.http.editor.sidebar.request;
 
-import com.javierllorente.netbeans.rest.client.RestClient;
 import com.javierllorente.netbeans.rest.client.ResponseModel;
+import com.javierllorente.netbeans.rest.client.RestClient;
+import com.javierllorente.netbeans.rest.client.RestClientInitializer;
 import com.javierllorente.netbeans.rest.client.http.editor.sidebar.ResponseSidebarManager;
 import com.javierllorente.netbeans.rest.client.http.editor.syntax.antlr.HTTPLexer;
 import com.javierllorente.netbeans.rest.client.http.editor.syntax.antlr.HTTPParser;
@@ -30,10 +31,12 @@ import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.core.MultivaluedMap;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.SwingUtilities;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.StyledDocument;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.netbeans.api.progress.ProgressHandle;
 import org.openide.text.NbDocument;
 
 /**
@@ -45,6 +48,7 @@ public class RequestProcessor implements IRequestProcessor {
     public final List<Request> currentRequests;
     private final StyledDocument document;
     private final RestClient restClient;
+    private final org.openide.util.RequestProcessor processor;
     private JTextComponent textComponent;
     private RestClientTopComponent restClientUi;
 
@@ -52,7 +56,8 @@ public class RequestProcessor implements IRequestProcessor {
         this.currentRequests = new ArrayList<>();
         this.document = document;
 
-        this.restClient = new RestClient();
+        this.restClient = RestClientInitializer.createClient();
+        this.processor = new org.openide.util.RequestProcessor(RequestProcessor.class);
     }
 
     /**
@@ -119,17 +124,34 @@ public class RequestProcessor implements IRequestProcessor {
             return;
         }
 
-        this.restClient.setHeaders(getHeaders(requestContext.requestHeaders()));
-        this.restClient.setBody(getBody(requestContext.requestBodySection()));
+        // Extract values before async execution (parser context may not be thread-safe)
+        final String url = requestTarget.getText();
+        final String method = requestLine.METHOD() == null ? "GET" : requestLine.METHOD().getText();
+        final MultivaluedMap<String, String> headers = getHeaders(requestContext.requestHeaders());
+        final String body = getBody(requestContext.requestBodySection());
+        final JTextComponent tc = this.textComponent;
 
-        ResponseModel response = this.restClient.request(requestTarget.getText(), requestLine.METHOD() == null ? "GET" : requestLine.METHOD().getText());
+        // Execute request asynchronously to avoid blocking the EDT
+        processor.post(() -> {
+            ProgressHandle progressHandle = ProgressHandle.createHandle("Sending request: " + method + " " + url);
+            progressHandle.start();
 
-        // Show response in sidebar if textComponent is available
-        if (textComponent != null && response != null) {
+            try {
+                this.restClient.setHeaders(headers);
+                this.restClient.setBody(body);
 
-            // Pass headers to sidebar
-            ResponseSidebarManager.getInstance().showResponse(textComponent, response);
-        }
+                ResponseModel response = this.restClient.request(url, method);
+
+                // Show response in sidebar if textComponent is available (update on EDT)
+                if (tc != null) {
+                    SwingUtilities.invokeLater(() -> {
+                        ResponseSidebarManager.getInstance().showResponse(tc, response);
+                    });
+                }
+            } finally {
+                progressHandle.finish();
+            }
+        });
     }
 
     @Override
