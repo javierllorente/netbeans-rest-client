@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 Javier Llorente <javier@opensuse.org>.
+ * Copyright 2022-2026 Javier Llorente <javier@opensuse.org>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,8 @@ import org.openide.util.Exceptions;
  * @author Javier Llorente <javier@opensuse.org>
  */
 public class FormatUtils {
+    
+    private static final String XSL_FILE = "/com/javierllorente/netbeans/rest/client/prettyprint.xsl";
 
     private FormatUtils() {
     }
@@ -85,7 +87,7 @@ public class FormatUtils {
     }
     
     private static Source readXsl() {
-        InputStream inputStream = FormatUtils.class.getResourceAsStream("prettyprint.xsl");
+        InputStream inputStream = FormatUtils.class.getResourceAsStream(XSL_FILE);
         Source xslSource = null;
         try {
             if (inputStream != null) {
